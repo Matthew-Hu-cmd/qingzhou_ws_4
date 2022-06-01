@@ -1,2 +1,3 @@
 # qingzhou_ws_4
-compititon code for smart car
+logostic robot's code on Jetson Nano
+
