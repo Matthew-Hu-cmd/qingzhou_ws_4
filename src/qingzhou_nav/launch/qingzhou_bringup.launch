@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<launch>
+
+    <node name="qingzhou_bringup" pkg="qingzhou_bringup" type="qingzhou_bringup" output="screen"  respawn="true"/>
+      <param name="mcuserialport" value="/dev/stm32board" type="string"/> 
+      <param name="mcubaudrate" value = "115200" type = "int"/> 
+
+      <param name="calibrate_lineSpeed" value = "0" type = "int"/> 
+      <param name="calibrate_angularSpeed" value = "0" type = "int"/> 
+      <param name="ticksPerMeter" value = "1200" type = "int"/>      <!-- 1235  -->
+      <param name="ticksPer2PI" value = "3059" type = "int"/>             <!--  26500  5800  --> 
+      
+    <node pkg="imu_calib" type="apply_calib" name="apply_calib" output="screen" respawn="false">
+      <param name="calib_file" value="$(find imu_calib)/../launch/imu_calib.yaml" />
+      <param name="calibrate_gyros" value="true" />
+      <remap from="corrected" to="imu/data_raw" />
+    </node>
+      
+    <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick" output="screen" respawn="true" >
+      <param name="fixed_frame" value="odom" />
+      <param name="use_mag" value="false" />
+      <param name="publish_tf" value="false" />
+      <param name="use_magnetic_field_msg" value="true" />  
+      <param name="world_frame" value="enu" />
+      <remap from="imu/data" to="imu_data" />
+    </node>
+    
+    <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf" output="screen"  respawn="true">
+      <param name="output_frame" value="odom"/>
+      <param name="base_footprint_frame" value="base_link"/>
+      <param name="freq" value="30.0"/>
+      <param name="sensor_timeout" value="1.0"/>
+      <param name="odom_used" value="true"/>
+      <param name="imu_used" value="true"/>
+      <param name="vo_used" value="false"/>
+      <param name="gps_used" value="false"/>
+      <param name="debug" value="false"/>
+      <param name="self_diagnose" value="false"/>
+    </node>
+
+    <!--   <node pkg="qingzhou_bringup" type="odom_ekf.py" name="odom_ekf" output="screen">
+      <remap from="input" to="robot_pose_ekf/odom_combined"/>
+      <remap from="output" to="/odom_ekf"/>
+   </node> -->     
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_imulink"
+    args="-0.08 0.0 0.05 0.0 0.0  0.0 /base_link /imu_link 50" />
+</launch>

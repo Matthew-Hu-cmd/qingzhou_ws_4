@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<launch>
+<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+<!-- costmap layers -->   
+    <rosparam file="$(find qingzhou_nav)/config/l1_local_costmap_params.yaml" command="load" />
+<rosparam file="$(find qingzhou_nav)/config/l1_global_costmap_params.yaml" command="load" />
+<!-- move_base params -->
+<rosparam file="$(find qingzhou_nav)/launch/includes/move_base_params.yaml" command="load"/>
+  </node>
+
+
+    <!-- L1 controller -->  
+    <node pkg="qingzhou_nav" type="L1_controller_v2" respawn="false" name="L1_controller_v2" output="screen">       
+        <!-- L1 -->
+        <param name="Vcmd" value="0.7" /> <!-- speed of car m/s     0.7-->      
+        <!-- ESC -->
+	<param name="base_speed" value="0.7"/> <!-- speed of car 1.0 m/s    0.7--> 
+        <!-- Servo -->
+        <param name="base_angle" value="0.0"/> <!-- the middle pos of servo if tuning needed  -->
+        <param name="angle_gain" value="-1.8"/> <!-- for tt02: >0, for hsp: "-2"<0 -->		
+
+    </node>
+
+</launch>

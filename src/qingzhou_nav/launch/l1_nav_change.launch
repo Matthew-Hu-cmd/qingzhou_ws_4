@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+  <master auto="start"/>
+
+  <include file="$(find qingzhou_nav)/launch/ydlidar.launch" />
+
+    <!-- for amcl -->    
+    <include file="$(find qingzhou_nav)/launch/amcl.launch" /> 
+
+    <!-- for Map server -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find qingzhou_nav)/maps/usth.yaml" output="screen"/>
+
+    <!-- Navigation -->
+    <include file="$(find qingzhou_nav)/launch/includes/qingzhou_move_base_change.launch.xml" />
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find qingzhou_nav)/rviz/l1_move_base.rviz"/>
+</launch>

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="qingzhou_bringup" type="DynamicParams.py" name="DynamicParamsClient" output = "screen">
+        
+    </node>
+</launch>

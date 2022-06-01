@@ -1,0 +1,47 @@
+#map_type: voxel
+map_type: costmap
+robot_radius: 0.25 #»úÆ÷ÈËµÄ°ë¾¶£¬µ¥Î»ÊÇÃ×£¬·ÇÔ²ÐÎ»úÆ÷ÈË»¹ÐèÒªÅäºÏfootprint²ÎÊý
+#³¤65cm£¬¿í45cm£¬¸ß25cm
+#footprint: [[0.23,0.19],[0.25,0],[0.23,-0.19],[-0.23, -0.19],[-0.23,0.19]]hpÈýÔº¸øµÄÎå±ßÐÎ³µ
+footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]] #ËÄ±ßÐÎ³µË³ÊÆÕëÄæÊ±Õë×ø±ê¶¼¿ÉÒÔ
+recovery_behavior_enabled: true
+reset_distance: 7.0
+controller_frequency: 5
+
+obstacle_layer: #ÕÏ°­Îï²ã
+  enabled:              true
+  combination_method:   1
+  track_unknown_space:  false
+  origin_z: 0.0
+  z_voxels: 20
+  z_resolution: 0.1
+  unknown_cost_value: 0
+  unknown_threshold: 8
+  mark_threshold: 0
+  publish_voxel_map: false
+
+  obstacle_range: 2.5
+  raytrace_range: 10.0
+  #footprint:[[-0.3,-0.4],[-0.3,1.03],[-0.0,1.03],[0.3, 1.03],[0.3,-0.4]]
+  footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]]
+  inflation_radius: 0.23
+  #inf_is_valid:true
+  max_obstacle_height: 0.40
+  min_obstacle_height: 0.03
+  controller_frequency: 5
+  observation_sources: scan 
+  #point_cloud_sensor
+
+  scan: {sensor_frame: base_link,  observation_persistence: 0.0, 
+  max_obstacle_height: 0.3, min_obstacle_height: 0.05, data_type: LaserScan, topic: /scan, 
+  marking: true,clearing: true}
+
+inflation_layer: #ÅòÕÍ²ä
+ enabled:              true
+ cost_scaling_factor:  5.0   # exponential rate at which the obstacle cost drops off (default:10)
+ inflation_radius:     0.23 #ÅòÕÍ°ë¾¶ max. distance from an obstacle at which costs are incurred for planning paths.
+
+static_layer: #¾²Ì¬µØÍ¼Ôø
+ enabled: true
+
+

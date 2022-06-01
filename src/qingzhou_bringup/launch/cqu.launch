@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find qingzhou_bringup)/launch/qingzhou_bringup.launch" />
+    <include file="$(find qingzhou_nav)/launch/l1_nav_pure_v3.launch" />
+    <!-- <node pkg="qingzhou_bringup" type="TCP_Send_node" name="TCP_Send_node" output = "screen"></node> -->
+    <!-- <include file="$(find qingzhou_bringup)/launch/DynamicParamsClient.launch" />
+    <include file="$(find robot_vision)/launch/detector.launch" />  -->
+</launch>

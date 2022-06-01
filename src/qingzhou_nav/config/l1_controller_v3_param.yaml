@@ -1,0 +1,11 @@
+L1Controller:
+  L: 1.0
+  Lrv: 10.0
+  Vcmd: 1.0
+  lfw: 0.13
+  lrv: 10.0
+  controller_freq: 20
+  angle_gain: 1.0
+  gas_gain: 1.0
+  base_speed: 1.0
+  base_angle: 0.0
