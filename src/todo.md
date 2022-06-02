@@ -7,7 +7,7 @@
 	|----看bringup.cpp文件里面读取的串口数据
 	4.把世奇学长的代码改一下
 
-## 二、路径控制
+## 二、路径控制&DynamicConfig
 	1. add dynamicreconfigure feature inplace of the param server
    	(DONE 5.31 2022)
 
@@ -18,6 +18,16 @@
 	|---maybe a good thing 
 	|---but can still be changed by 1/(（1/car2goal_dist）* speed)
 	git is shit
+
+	4. 它tmd把bringup改了好多啊，加了视觉结果东西进来，目前还不知道是好事还是坏事
+    |---
+	|---
+	5. 有的点跑到了角落就无法规划了
+    |\
+	| \
+	|  \
+	|   \
+	|————\ 把不能去到的区域用三角形划出来，在Dynamic里面强迫他后退
 
 ## 三、视觉控制
 	1. 把图像传输功能去掉，过于占用资源
