@@ -52,10 +52,10 @@ class navigation_demo:
 
 
     def socket_cb(self, msg):
-        pdX = [1.969, 1.989, -2.150, 0.845]
-        pdY = [-4.149, -5.590, -5.617, -3.935]
-        pdth = [0,0,0,0]
-        sec = [15.0, 15.0, 15.0, 15.0]
+        pdX = [1.969, 1.989, -2.150, 0.845, 0]
+        pdY = [-4.149, -5.590, -5.617, -3.935, 0]
+        pdth = [0,0,0,0,0]
+        sec = [15.0, 15.0, 15.0, 15.0, 10.0]
 
         if (msg.data == 1):
             print("Going to loading port:", msg.data)

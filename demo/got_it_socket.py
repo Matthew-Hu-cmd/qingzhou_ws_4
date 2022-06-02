@@ -274,7 +274,7 @@ if __name__ == "__main__":
     #print "asdasd"
     #sock_client = SockClient('192.168.31.191', 8888)
     sys.stdout.flush()
-    sock_client = SockClient('192.168.0.11', 8888)
+    sock_client = SockClient('192.168.1.10', 8888)
     #print "asdasd"
     sock_client.start()
     ros = Worker()

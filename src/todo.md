@@ -7,8 +7,9 @@
 	|----看bringup.cpp文件里面读取的串口数据
 	4.把世奇学长的代码改一下
 
-## 二、控制
-	1. add dynamicreconfigure feature inplace of the param server(DONE 5.31 2022)
+## 二、路径控制
+	1. add dynamicreconfigure feature inplace of the param server
+   	(DONE 5.31 2022)
 
 	2. solve the problem that can't reach the final goal
 	|---maybe no extra function is needed to achieve that
@@ -16,3 +17,11 @@
 	3. speed changed too abrptly while stopping & startting
 	|---maybe a good thing 
 	|---but can still be changed by 1/(（1/car2goal_dist）* speed)
+	git is shit
+
+## 三、视觉控制
+	1. 把图像传输功能去掉，过于占用资源
+	2. 多线程编程
+   	|-----参考三院tradtional_ws 提供的方法
+	3. 视觉控制最终发布需要能够符合bringup节点的接收
+	4. 尝试神经网络方案做车道线识别

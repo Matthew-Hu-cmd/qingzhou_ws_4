@@ -63,7 +63,7 @@ actuator::actuator(ros::NodeHandle handle)
 //析构函数
 actuator::~actuator() 
 {
-
+    
 }
 
 void actuator::reach_cb(const std_msgs::Bool::ConstPtr &msg)
