@@ -10,7 +10,7 @@ def region_of_interest(r_image):
     poly = np.array([
         [(0, h-90), (w, h-90), (w, h), (0, h)]  #将数组转化为矩阵，四个为长方形的四个顶点，从左上角开始顺时针,最下面竖着100个像素的图 #原来是100
     ])
-    
+
     mask = np.zeros_like(gray) #输入为矩阵gray，输出为形状和gray一致的矩阵，其元素全部为黑色0
     cv2.fillPoly(mask, poly, 255)   #将mask的poly部分填充为白色255
     masked_image = cv2.bitwise_and(r_image,r_image, mask=mask)  #将r_image的mask区域提取出来给masked_image
@@ -30,8 +30,6 @@ def color_seperate(image):
 # ############################红色分割##############################
 def color_seperate_1(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)   #对目标图像进行色彩空间转换
-    # lower_hsv = np.array([156, 43, 46])          #设定红色下限
-    # upper_hsv = np.array([180, 255, 255])        #设定红色上限
     lower_hsv = np.array([0, 43, 46])          #设定红色下限
     upper_hsv = np.array([10, 255, 255])        #设定红色上限
     mask = cv2.inRange(hsv, lowerb=lower_hsv, upperb=upper_hsv)  #依据设定的上下限对目标图像进行二值化转换，低于lower,高于upper都变成0，在中间为255
