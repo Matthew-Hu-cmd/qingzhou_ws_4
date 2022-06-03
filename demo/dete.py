@@ -18,6 +18,12 @@ v_min = 16
 v_max = 177
 color = "b"
 old_angle = 0
+kpl = 560
+kpm = 760
+kpr = 720
+kdm = 1600
+kdl = 1400
+kdr = 1300
 middle = 1500
 green_exist = 0
 error_check = 0
@@ -81,7 +87,7 @@ def gstreamer_pipeline(
             )
     )
 
-cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+cam = cv2.VideoCapture(1)#gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
 rospy.init_node('linetrack', anonymous=False)
 
 green_light = rospy.Publisher('/traffic_light',Bool,queue_size=10)#ture检测到绿灯

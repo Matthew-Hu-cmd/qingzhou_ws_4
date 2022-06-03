@@ -18,6 +18,7 @@ from handleImg import *
 
 reached = False
 done = False
+use = 'line'
 
 def quit():
     sys.exit()
@@ -208,7 +209,6 @@ def pianyi_detect(img):
     # print("pianyi_text")
     
     # 返回偏移量（cm）和偏移方向（左偏或者右偏）
-    global pianyi_befor
     pianyi_now = abs(pianyi)
 
     if pianyi_text == 'right' :
@@ -229,12 +229,12 @@ def pianyi_detect(img):
 
 if __name__ == '__main__':
     # 初始化设置
-    cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+    cam = cv2.VideoCapture(1)    #gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
     freq = 5
     openColorDetector = 0
     controlFlag = 0
     pianyisamelist = [0,0,0,0,0,0,0]
-    pianyi_befor = 0
+    pianyi_before = 0
 
     #节点设置
     rospy.init_node('linetrack', anonymous=False)
@@ -268,6 +268,7 @@ if __name__ == '__main__':
                     controlFlag = 1
 
                 if (use == "line" and reached): # 到达车道线前面的一个点，并且识别到车道线
+                    img = cv2.resize(img,(640,480))
                     starttime = time.time()
                     img = img[3: 475,3:635]  #切割掉左右下角干扰点
                     img_line = cv2.resize(img,(640,480))
@@ -283,7 +284,7 @@ if __name__ == '__main__':
                         ark_contrl.speed = 0.55  #0.55
                         cmd_vel_pub.publish(ark_contrl)
 
-                    pianyibefore = pianyi
+                    pianyi_before = pianyi
 
                     for index,value in enumerate(pianyisamelist):
                         if(not(index == len(pianyisamelist)-1)):
@@ -294,15 +295,15 @@ if __name__ == '__main__':
                             pianyisamelist[index] = pianyi
 
                     if(len(set(pianyisamelist)) == 1):
-                        if((time.time()-starttime) > 2.0):
                         #4.5s前不考虑车会退出赛道 大概需要5s多  可以加一个判断如果超出赛道一定时间就判断退出
-                        ark_contrl.steering_angle = 0.0
-                        ark_contrl.speed = 0.0
-                        cmd_vel_pub.publish(ark_contrl)
-                        error_check = 0
-                        done_pub.publish(True)
-                        print("done")
-                        break
+                        if((time.time()-starttime) > 2.0):
+                            ark_contrl.steering_angle = 0.0
+                            ark_contrl.speed = 0.0
+                            cmd_vel_pub.publish(ark_contrl)
+                            error_check = 0
+                            done_pub.publish(True)
+                            print("done")
+                            break
 
                     print(pianyisamelist) 
 
