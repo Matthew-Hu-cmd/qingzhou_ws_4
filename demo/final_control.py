@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # from launch_demo import launch_demo
 import rospy
 import subprocess
@@ -25,10 +26,12 @@ class navigation_demo:
         # traffic light
         self.sub_traffic = rospy.Subscriber('/traffic_light', Bool, self.traffic_light)
         # line check
-        self.pub_line = rospy.Publisher('/detector_line',Bool,queue_size=10)
+        self.pub_line = rospy.Publisher('/detector_line',Bool,queue_size=10)        #不确定这是干啥的，感觉跟reached没有任何区别啊
         self.pub_color = rospy.Publisher('/detector_trafficlight',Bool,queue_size=10)
-        self.pub_reached = rospy.Publisher('/reached',Bool,queue_size=10)
-        self.sub_done = rospy.Subscriber('/done',Bool,self.done_cb)
+        self.pub_reached = rospy.Publisher('/reached',Bool,queue_size=10)           #有没有到达车道线的起点，到了就往外发true
+                                                                                        #dete.py 订阅了---用来看是不是到达车道线（其实完全没必要啊，可以用tf算出的位置来判断这样就不会停下）
+                                                                                        #qingzhou_bringup订阅了---
+        self.sub_done = rospy.Subscriber('/done',Bool,self.done_cb)                 #dete发出来的/done（bool）会告诉小车是不是出了车道线,如果出了，就去执行done_cb，done_cb会使得其回到原点
         
         self.count = 0
         self.judge = 0    
@@ -52,10 +55,10 @@ class navigation_demo:
 
 
     def socket_cb(self, msg):
-        pdX = [1.969, 1.989, -2.150, 0.845, 0]
-        pdY = [-4.149, -5.590, -5.617, -3.935, 0]
-        pdth = [0,0,0,0,0]
-        sec = [15.0, 15.0, 15.0, 15.0, 10.0]
+        pdX = [1.969, 1.989, -2.150, 0.845]
+        pdY = [-4.149, -5.590, -5.617, -3.935]
+        pdth = [0,0,0,0]
+        sec = [8.0, 4.0, 11.0, 11.0]
 
         if (msg.data == 1):
             print("Going to loading port:", msg.data)
@@ -119,16 +122,17 @@ class navigation_demo:
             r.sleep()
             
             print("-------------line detector-------------")
-            rosnode.kill_nodes(['L1_controller_v2'])
+            #rosnode.kill_nodes(['L1_controller_v2'])
+            rosnode.kill_nodes(['L1_controller_v3'])
             r = rospy.Rate(0.5)
             print("OK")
             self.pub_line.publish(True)
             self.pub_reached.publish(True)
             # self.pub_line.publish(True)
             # self.pub_reached.publish(True)
+            subprocess.Popen(["rosrun","qingzhou_nav","L1_controller_v3","__name:=L1_controller_v3","_angle_gain:=-1.8"])
             r = rospy.Rate(1/14.0)
             r.sleep()
-            subprocess.Popen(["rosrun","qingzhou_nav","L1_controller_v2","__name:=L1_controller_v2","_angle_gain:=-1.8"])
             r = rospy.Rate(1)
             
 

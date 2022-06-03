@@ -119,7 +119,7 @@ while True:
 
 
         line_img = mask[120:220,0:220]
-        check_img = mask[120:,261:]
+        # check_img = mask[120:,261:]
         light_img = mask[:100,:200 ]
         # cv2.imshow("raw",img)
         # cv2.imshow("line",line_img)
@@ -131,11 +131,11 @@ while True:
             cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
             done_pub.publish(False)
             line_xy = np.column_stack(np.where(line_img == 255))
-            check_xy = np.column_stack(np.where(check_img == 255)) 
+            # check_xy = np.column_stack(np.where(check_img == 255)) 
             line_x = np.mean(line_xy[:,0])
             line_y = np.mean(line_xy[:,1])
-            check_x = np.mean(check_xy[:,0])
-            check_y = np.mean(check_xy[:,1])
+            # check_x = np.mean(check_xy[:,0])
+            # check_y = np.mean(check_xy[:,1])
             # if np.isnan(check_x) and np.isnan(check_y):
             center_x = line_x + 120
             center_y = line_y #计算中点坐标
@@ -144,13 +144,13 @@ while True:
             if np.isnan(center_x) or np.isnan(center_y):
                 angle = 0
             else:
-                angle = np.degrees(np.arctan(int(160-center_y)/int(center_x - 26)))
+                angle = np.degrees(np.arctan(float(160-center_y)/float(center_x - 26)))
                 if angle<0:
                     angle = angle-10
                 else:
                     angle = angle+10
             # print(line_x,line_y)
-            print(angle)
+            # print(angle)
             angle = 0.7 * angle + 0.3 * old_angle
             old_angle = angle
             ark_contrl.steering_angle = angle
