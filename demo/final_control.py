@@ -130,9 +130,9 @@ class navigation_demo:
             self.pub_reached.publish(True)
             # self.pub_line.publish(True)
             # self.pub_reached.publish(True)
-            subprocess.Popen(["rosrun","qingzhou_nav","L1_controller_v3","__name:=L1_controller_v3","_angle_gain:=-1.8"])
             r = rospy.Rate(1/14.0)
             r.sleep()
+            subprocess.Popen(["rosrun","qingzhou_nav","L1_controller_v3","__name:=L1_controller_v3","_angle_gain:=-1.8"])
             r = rospy.Rate(1)
             
 
@@ -159,7 +159,6 @@ class navigation_demo:
 
     def done_cb(self,msg):
         self.done = msg.data
-
         print (self.done)
         if self.done is True:
             
@@ -168,8 +167,13 @@ class navigation_demo:
             # r = rospy.Rate(1)
             # r.sleep()
             w = [0.0, 0.0 , 0.0]
-            self.goto([w[0], w[1], w[2]])
-            self.pub_line.publish(False)
+            times = 0
+            for times in range(0,5):
+                self.goto([w[0], w[1], w[2]])
+                self.pub_line.publish(False)
+                r = rospy.Rate(1/1.0)
+                r.sleep()
+            
             ######
             # r = rospy.Rate(1)
             # r.sleep()

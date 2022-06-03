@@ -154,7 +154,7 @@ while True:
             angle = 0.7 * angle + 0.3 * old_angle
             old_angle = angle
             ark_contrl.steering_angle = angle
-            ark_contrl.speed = 0.55
+            ark_contrl.speed = 0.55  #0.55
             cmd_vel_pub.publish(ark_contrl)
 
             if (np.isnan(line_x) or np.isnan(line_y))and reached:            

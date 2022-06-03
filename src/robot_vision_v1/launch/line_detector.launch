@@ -1,4 +1,0 @@
-<launch>
-    <node pkg="robot_vision" name="line_detector" type="line_detector.py" output="screen">
-    </node>
-</launch>

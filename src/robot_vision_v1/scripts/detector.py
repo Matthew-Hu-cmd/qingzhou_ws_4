@@ -8,8 +8,6 @@ import threading
 import socket
 import struct
 import traceback
-# import argparse
-from _02GStreamer import *
 import time
 import rospy
 # import matplotlib.pyplot as plt
@@ -17,8 +15,7 @@ import rospy
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Vector3
-from _02CalculatePositon import *
-from _03TrafficLight import *
+from all_function import *
 from robot_vision.srv import app
 
 import ctypes
@@ -96,7 +93,6 @@ class ProcessServer(threading.Thread):
         # 设置重复使用
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
         # 绑定地址和端口
-        # self.server.bind(('192.168.2.111', 11000))
         self.server.bind(('192.168.0.19', 11000))
         # 设置被动监听
         print("listening 11000")

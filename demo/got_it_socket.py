@@ -301,4 +301,3 @@ if __name__ == "__main__":
         sock_client.running = False
     sock_client.join()
     print ('exit finally')
-
