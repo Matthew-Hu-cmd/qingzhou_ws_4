@@ -31,7 +31,7 @@ actuator::actuator(ros::NodeHandle handle)
    handle.param("calibrate_lineSpeed",calibrate_lineSpeed,calibrate_lineSpeed);         
    handle.param("calibrate_angularSpeed",calibrate_angularSpeed,calibrate_angularSpeed);
    handle.param("ticksPerMeter",ticksPerMeter,ticksPerMeter);                           
-   handle.param("ticksPer2PI",ticksPer2PI,ticksPer2PI);                                 
+   handle.param("ticksPer2PI",ticksPer2PI,ticksPer2PI);
 
     try{ 
       std::cout<<"[qingzhou_actuator-->]"<<"Serial initialize start!"<<std::endl;              
@@ -104,8 +104,8 @@ void actuator::callback_move_base(const ackermann_msgs::AckermannDrive::ConstPtr
    if(moveBaseControl.TargetAngle > 95){
       moveBaseControl.TargetAngle = 95;           //角度最大90
    }
-
-   printf("%d,%d       %d,%d\n",abs(moveBaseControl.TargetSpeed),abs(moveBaseControl.TargetAngle),angle,line);	   
+//		输出控制信息：目标、实际
+//    printf("%d,%d       %d,%d\n",abs(moveBaseControl.TargetSpeed),abs(moveBaseControl.TargetAngle),angle,line);	   
 
 }
 
@@ -259,16 +259,19 @@ void actuator::recvCarInfoKernel()
 	        break;                                                   
 	    }
 		
-	    recvstr = ser.read(1);                                      		
+	    recvstr = ser.read(1);        
+		
 	    if((int)recvstr.size() != 1)                                 
 	        continue;                                               
 		
-	    tempdata = recvstr[0];                                       
+	    tempdata = recvstr[0];    
+
 	    if(last_last_last_data == 0xa5 && last_last_data == 0x5a){   
-	        lenrecv = last_data;                                     
+	        lenrecv = last_data;            
 	        recvflag = true;                                         
 	        count = 0;                                               
 	    }
+
 	    if(recvflag){                                               
 	        str[count] = tempdata;                                   
 	        count++;                                                

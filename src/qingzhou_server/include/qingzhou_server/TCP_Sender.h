@@ -20,6 +20,7 @@
 class TCP_Sender
 {
 private:
+	//********************TCP通信部分********************//
 	//调用socket函数返回的文件描述符
 	int serverSocket;
 	int client;
@@ -31,10 +32,11 @@ private:
 	struct sockaddr_in serverAddr;
 	struct sockaddr_in clientAddr;
 
+	//********************ROS通信部分********************//
 	ros::NodeHandle nh;
 
 public:
-	TCP_Sender();
+	TCP_Sender(const ros::NodeHandle &nh);
 	~TCP_Sender();
 	void initTCP();
 	void createLink();

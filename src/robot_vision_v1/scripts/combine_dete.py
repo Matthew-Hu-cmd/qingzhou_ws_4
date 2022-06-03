@@ -268,6 +268,8 @@ if __name__ == '__main__':
                     controlFlag = 1
 
                 if (use == "line" and reached): # 到达车道线前面的一个点，并且识别到车道线
+                    cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
+                    done_pub.publish(False)
                     img = cv2.resize(img,(640,480))
                     starttime = time.time()
                     img = img[3: 475,3:635]  #切割掉左右下角干扰点
