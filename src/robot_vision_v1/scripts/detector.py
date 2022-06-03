@@ -15,7 +15,6 @@ import rospy
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Vector3
-from all_function import *
 from robot_vision.srv import app
 
 import ctypes
@@ -233,8 +232,6 @@ def color_seperate(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)   #对目标图像进行色彩空间转换
     lower_hsv = np.array([100, 43, 46])          #设定蓝色下限
     upper_hsv = np.array([124, 160, 160])        #设定蓝色上限
-    # lower_hsv = np.array([80, 60, 60])          #设定蓝色下限
-    # upper_hsv = np.array([150, 180, 180])        #设定蓝色上限
     mask = cv2.inRange(hsv, lowerb=lower_hsv, upperb=upper_hsv)  #依据设定的上下限对目标图像进行二值化转换，低于lower,高于upper都变成0，在中间为255
     dst = cv2.bitwise_and(image, image, mask=mask)    #将image的mask区域提取出来给dst,即找到蓝色区域并赋值给dst
     # cv2.imshow('blue', dst)  #查看蓝色区域的图像
@@ -499,48 +496,27 @@ if __name__ == '__main__':
     rate = rospy.Rate(100)
 
     try:
-
-        # server = Server()
-        # print('TCP server established!')
-        # server.run()
-        # print('TCP server running!')
         tcp_server_thread = ProcessServer()
         tcp_server_thread.start()
-        # ProcessServer().start()
         rospy.loginfo("detector node is started...")
         while not rospy.is_shutdown():
-            # time1 = time.time()
             rate.sleep()
-            # time.sleep(0.01)
             ret, Img = Video.read()
-            # print(Img.shape)
-            # time2 = time.time()
-            # cv2.imshow('c',Img) #红绿灯输入全图
-            # cv2.waitKey(5)
-            # time2 = time.time()
-            # print("get pic :{}".format(time2-time1))
             if(Img is None):
                 print("img is none")
                 #当检测读取图片失败的时候，让红绿灯为绿灯1，车道线为超出车道线999
                 data.x = 1
                 data.y = 999
             else:
-                # time1 = time.time()
                 if(openColorDetector):
                     if (flag_traffic%7) == 0 :  #对帧率进行7分频，没到整数倍就不读进来
-                    # time1 = time.time()
                         Img_1 = cv2.resize(Img,(1920,1080))
-                        # time2 = time.time()
-                        # print("resize :{}".format(time2-time1))
                         colortype = detector(Img_1)
                         # print(colortype) #打印红绿灯的检测最终结果
                     flag_traffic = flag_traffic + 1
                 else:
                     colortype = -1
-                # time2 = time.time()
-                # print("traffic :{}".format(time2-time1))
                 
-
                 if colortype == 0 : #红灯
                     data.x = 0
                     # vision.publish(data)
@@ -604,18 +580,7 @@ if __name__ == '__main__':
 
                 if(controlFlag == 1):
                     data.y = pianyi
-                    vision.publish(data)
-        
-        # rospy.loginfo("killing tcp server")
-        # res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tcp_server_thread.ident),ctypes.py_object(SystemExit))
-        # if(res == 0):
-        #     rospy.loginfo("invaild thread id")
-        # elif(res>1):
-        #     rospy.loginfo("kill failed, try again")
-        #     ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tcp_server_thread.ident),None)
-        # else:
-        #     rospy.loginfo("killed tcp server")
-                    
+                    vision.publish(data)                 
 
     except rospy.ROSInterruptException:
         print('End')
