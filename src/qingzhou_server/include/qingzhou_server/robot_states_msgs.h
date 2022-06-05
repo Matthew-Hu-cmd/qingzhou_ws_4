@@ -6,20 +6,21 @@
 #ifndef __ROBOT_STATES_MSGS__
 #define __ROBOT_STATES_MSGS__
 
-#include "TCP_Sender.h"
 
 //存放机器人状态信息的结构体
-typedef struct robotStatesMsgs
+typedef struct RobotStatesMsgs
 {
 	float battary;			//电池电压
 	float linearSpeed;		//线速度
     float angularSpeed;		//角速度
-	//坐标通过监听TF关系获取
     float locationX;		//X坐标
     float locationY;		//Y坐标
-};
-
-void SubMsgTopic(TCP_Sender* tcpsender);
+	RobotStatesMsgs() : battary(0), 
+	linearSpeed(0), 
+	angularSpeed(0), 
+	locationX(0), 
+	locationY(0) {}
+}RobotStatesMsgs;
 
 
 #endif

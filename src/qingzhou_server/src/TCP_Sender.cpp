@@ -2,7 +2,7 @@
 文件名：TCP_Sender.cpp
 功能：TCP_Sender类的实现
 
-作者：0E
+作者：胡杨
 ******************************************/
 
 #include "TCP_Sender.h"
@@ -18,6 +18,8 @@ TCP_Sender::TCP_Sender(const ros::NodeHandle &nodeHandle)
 
 	addr_len = sizeof(clientAddr);
 	//订阅需要使用到的话题
+	SubMsgTopic();
+	initTCP();
 }
 
 TCP_Sender::~TCP_Sender()
@@ -38,6 +40,9 @@ void TCP_Sender::initTCP()
 	{
 		ROS_INFO("Create Socket!");
 	}
+
+	setNonBlock(serverSocket);
+
 	//初始化服务端的套接字，并用htons和htonl将端口和地址转换成网络字节
 	bzero(&serverAddr, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
@@ -68,6 +73,20 @@ void TCP_Sender::initTCP()
 	}
 }
 
+/********************************************
+函数名：setNonBlock
+功能：将套接字设置为非阻塞
+********************************************/
+int TCP_Sender::setNonBlock(int iSock)
+{
+	int iFlags;
+
+	iFlags = fcntl(iSock, F_GETFL, 0);
+	iFlags |= O_NONBLOCK;
+	iFlags |= O_NDELAY;
+	int ret = fcntl(iSock, F_SETFL, iFlags);
+	return ret;
+}
 
 /********************************************
 函数名：createLink
@@ -80,16 +99,13 @@ void TCP_Sender::createLink()
 	//serverSocket负责继续监听，client负责接收和发送数据
 	//clientAddr是一个传出参数，accept返回时，传出客户端的地址和端口号
 	//addr_len是一个传入-传出参数，传入的是调用者提供的缓冲区clientAddr的长度，以免缓冲区溢出，传出的是客户端地址结构体的实际长度
-	if ((client = accept(serverSocket, (struct sockaddr *)&clientAddr, (socklen_t*)&addr_len)) != 0)
+	while ((client = accept(serverSocket, (struct sockaddr *)&clientAddr, (socklen_t*)&addr_len)) < 0)
 	{
 		ROS_ERROR("accept failed!");
 		ROS_ERROR_STREAM(strerror(errno));
-		return;
 	}
-	else
-	{
-		ROS_INFO("Waiting for messages...");
-	}
+
+	ROS_INFO("Waiting for messages...");
 	ROS_INFO("IP is %s", inet_ntoa(clientAddr.sin_addr));
 	ROS_INFO("Port is %d", htons(clientAddr.sin_port));
 }
@@ -103,21 +119,22 @@ void TCP_Sender::transMessage()
 {
 	while (1)
 	{
+		ros::spinOnce();
 		ROS_INFO("Read message");
 		recvBuff[0] = '\0';
 		//recv函数返回接收到信息的长度
 		//参数：客户端套接字，数据缓冲区，数据最大长度，操作（一般0）
 		//收到后将数据显示出来，再向客户端发送数据
-		if ((data_len = recv(client, recvBuff, 1024, 0)) < 0)
+		if ((data_len = recv(client, recvBuff, 1024, MSG_DONTWAIT)) < 0)
 		{
-			ROS_ERROR("Recieve None");
-			ROS_ERROR_STREAM(strerror(errno));
-			continue;
+			// ROS_ERROR("Recieve None");
+			// ROS_ERROR_STREAM(strerror(errno));
+			// continue;
 		}
 		else
 		{
 			recvBuff[data_len] = '\0';
-			ROS_INFO_STREAM("RRecieve: " << recvBuff);
+			ROS_INFO_STREAM("Recieve: " << recvBuff);
 		}
 		
 		if (strcmp(recvBuff, "quit") == 0)
@@ -125,15 +142,24 @@ void TCP_Sender::transMessage()
 			break;
 		}
 
-		ROS_INFO("Send message");
-		scanf("%s", sendBuff);
+		// ROS_INFO("Send message");
+		
 		//send函数向客户端发送消息，参数同recv函数
-		if ((send(client, sendBuff, strlen(sendBuff), 0)) != 0)
+		if ((send(client, &robotStatesMsgs, (size_t)sizeof(robotStatesMsgs), 0)) < 0)
 		{
 			ROS_ERROR("Send failed");
 			ROS_ERROR_STREAM(strerror(errno));
-			continue;
+			if (errno == 32) //Broken Pipe
+			{
+				break;
+			}
+			else
+			{
+				continue;
+			}
 		}
+		ros::Rate r = 1;
+		r.sleep();
 	}
 }
 

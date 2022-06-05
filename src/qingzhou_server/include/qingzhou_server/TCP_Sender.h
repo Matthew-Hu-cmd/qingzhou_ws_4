@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,6 +17,9 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/Twist.h>
+#include <ackermann_msgs/AckermannDrive.h>
+#include <nav_msgs/Odometry.h>
+#include "robot_states_msgs.h"
 
 #define SERVER_PORT 6666
 
@@ -38,24 +42,28 @@ private:
 	ros::NodeHandle nh;
 	ros::Subscriber bettarySub;
     ros::Subscriber speedSub;
+	ros::Subscriber odomSub;
+
+	//********************机器人信息********************//
+	struct RobotStatesMsgs robotStatesMsgs;
 
 public:
 	//********************TCP通信部分********************//
 	TCP_Sender(const ros::NodeHandle &nh);
 	~TCP_Sender();
 	void initTCP();
+	int setNonBlock(int iSock);
 	void createLink();
 	void transMessage();
 	void closeSocket();
 
 	//********************ROS通信部分********************//
 	void SubMsgTopic();
-	void SubMsgServer();
 	
 	//**********ROS话题服务的回调函数部分**********//
-	void SubBettaryInfoCB();
-    void SubSpeedCB(const geometry_msgs::Twist::ConstPtr &msg);
-
+	void SubBettaryInfoCB(const std_msgs::Float32::ConstPtr &msg);
+    void SubSpeedCB(const ackermann_msgs::AckermannDrive::ConstPtr &msg);
+	void SubOdomCB(const nav_msgs::Odometry::ConstPtr &msg);
 };
 
 
