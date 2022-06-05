@@ -25,7 +25,7 @@ class navigation_demo:
         goal.header.frame_id = 'map'
         goal.header.stamp = rospy.Time.now()
         goal.pose.position.x = p[0]
-        goal.pose.position.y = p[1]
+        goal.pose.position.y = p[1] 
         q = transformations.quaternion_from_euler(0.0, 0.0, p[2]/180.0*pi)
         goal.pose.orientation.x = q[0]
         goal.pose.orientation.y = q[1]

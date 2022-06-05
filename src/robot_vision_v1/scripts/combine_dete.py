@@ -236,11 +236,11 @@ if __name__ == '__main__':
     pianyisamelist = [0,0,0,0,0,0,0]
     pianyi_before = 0
 
-    #节点设置
+    # 节点设置
     rospy.init_node('linetrack', anonymous=False)
 
     green_light = rospy.Publisher('/traffic_light',Bool,queue_size=10)#ture检测到绿灯
-    sub_color = rospy.Subscriber('/detector_trafficlight', Bool, socket_cb)#true检测红色，false检测蓝色
+    sub_color = rospy.Subscriber('/detector_trafficlight', Bool, socket_cb)#true检测灯，false检测线
     ark_contrl = AckermannDrive()  # 实例化阿克曼消息
     sub_reached = rospy.Subscriber('/reached',Bool,reach_cb)
     done_pub = rospy.Publisher('/done',Bool,queue_size=10)
@@ -302,7 +302,6 @@ if __name__ == '__main__':
                             ark_contrl.steering_angle = 0.0
                             ark_contrl.speed = 0.0
                             cmd_vel_pub.publish(ark_contrl)
-                            error_check = 0
                             done_pub.publish(True)
                             print("done")
                             break

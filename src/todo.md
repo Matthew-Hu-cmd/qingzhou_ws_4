@@ -6,6 +6,8 @@
 	|----看底盘串口读取的数据顺序
 	|----看bringup.cpp文件里面读取的串口数据
 	4.把世奇学长的代码改一下
+	5.发现了一种能够在客户端直接和master通信的机制，并且找到了很好的开源代码与课程，应该可以很快实现一个简易的直接发目标点的客户端。结合盲人导航的
+	（qingzhou_nav l1_nav_blind.launch）更新应该可以实现一个百分之百不会重启的完整流程
 
 ## 二、路径控制&DynamicConfig
 	1. add dynamicreconfigure feature inplace of the param server
@@ -17,22 +19,25 @@
 	3. speed changed too abrptly while stopping & startting
 	|---maybe a good thing 
 	|---but can still be changed by 1/(（1/car2goal_dist）* speed)
-	git is shit
+	***git is shit***
 
 	4. 它tmd把bringup改了好多啊，加了视觉结果东西进来，目前还不知道是好事还是坏事：
+   		（DONE 2022.6.8）
     |----暂时没发现对这个有什么用
-	
-	5. 有的点跑到了角落就无法规划了
+	|----没什么事，义哲在修改客户端和上位机的代码了
+	5.  有的点跑到了角落就无法规划了（问题不大，最终调参阶段统一解决）
     |\
 	| \
 	|  \
 	|   \
 	|————\ 把不能去到的区域用三角形划出来，在Dynamic里面强迫他后退
+	倒不如直接用骚方法，绘制地图尽量来避免这种问题
 
 	<!-- 5. **************搞懂它goal生成的路径到底跟最终控制有什么关系****************
    			看看能不能最后直接只发布固定的path，把movebase给直接省略
 			   我可以写一个自己的路径规划器，用一种讨巧的方式
 			   接收目标点之后，我的规划器分段发布对应的路径 -->
+	
 
 ## 三、视觉控制
 	1. 把图像传输功能去掉，过于占用资源
