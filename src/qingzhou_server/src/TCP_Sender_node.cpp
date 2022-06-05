@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh("~");
 	//3.TCP_Sender类实例化
 	TCP_Sender* tcpsender;
-	tcpsender = new TCP_Sender();
+	tcpsender = new TCP_Sender(nh);
 	//4.初始化TCP_Sender
 	tcpsender->initTCP();
 	while (ros::ok())

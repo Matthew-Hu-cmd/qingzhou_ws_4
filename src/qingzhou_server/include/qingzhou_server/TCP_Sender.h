@@ -13,7 +13,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/Twist.h>
 
 #define SERVER_PORT 6666
 
@@ -34,14 +36,26 @@ private:
 
 	//********************ROS通信部分********************//
 	ros::NodeHandle nh;
+	ros::Subscriber bettarySub;
+    ros::Subscriber speedSub;
 
 public:
+	//********************TCP通信部分********************//
 	TCP_Sender(const ros::NodeHandle &nh);
 	~TCP_Sender();
 	void initTCP();
 	void createLink();
 	void transMessage();
 	void closeSocket();
+
+	//********************ROS通信部分********************//
+	void SubMsgTopic();
+	void SubMsgServer();
+	
+	//**********ROS话题服务的回调函数部分**********//
+	void SubBettaryInfoCB();
+    void SubSpeedCB(const geometry_msgs::Twist::ConstPtr &msg);
+
 };
 
 

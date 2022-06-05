@@ -6,7 +6,7 @@
 #ifndef __ROBOT_STATES_MSGS__
 #define __ROBOT_STATES_MSGS__
 
-#include <ros/ros.h>
+#include "TCP_Sender.h"
 
 //存放机器人状态信息的结构体
 typedef struct robotStatesMsgs
@@ -14,10 +14,12 @@ typedef struct robotStatesMsgs
 	float battary;			//电池电压
 	float linearSpeed;		//线速度
     float angularSpeed;		//角速度
+	//坐标通过监听TF关系获取
     float locationX;		//X坐标
     float locationY;		//Y坐标
 };
 
-//订阅发送以上信息的话题
-void SubMsgTopic(const ros::NodeHandle &nodeHandler);
+void SubMsgTopic(TCP_Sender* tcpsender);
+
+
 #endif

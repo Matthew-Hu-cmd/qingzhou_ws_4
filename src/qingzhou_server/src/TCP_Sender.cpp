@@ -12,8 +12,10 @@
 TCP_Sender类的构造函数
 功能：初始化Socket相关的配置
 ********************************************/
-TCP_Sender::TCP_Sender(const ros::NodeHandle &nh)
+TCP_Sender::TCP_Sender(const ros::NodeHandle &nodeHandle)
 {
+	nh = nodeHandle;
+
 	addr_len = sizeof(clientAddr);
 	//订阅需要使用到的话题
 }
