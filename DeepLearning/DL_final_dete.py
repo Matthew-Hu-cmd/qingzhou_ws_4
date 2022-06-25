@@ -1,4 +1,4 @@
-# /usr/lib/python3.6
+#! /usr/lib/python3.6
 #-*- coding:utf-8 _*-
 # from turtle import color
 import torch, os, cv2
@@ -55,7 +55,7 @@ def Normalization(Array):  # 数组归一化到0~1
 Device = torch.device("cuda:0")  # GPU加速
 Unet = UNet(in_channels=3, out_channels=1, init_features=4, WithActivateLast=True, ActivateFunLast=torch.sigmoid).to(
 Device)  
-Unet.load_state_dict(torch.load(os.path.join('270nice.pt'), map_location=Device))  # 将权重作为素材，提升预测的效果
+Unet.load_state_dict(torch.load(os.path.join('DeepLearning/270nice.pt'), map_location=Device))  # 将权重作为素材，提升预测的效果
 Unet.eval()  #验证模式
 torch.set_grad_enabled(False)  # 将梯度除外
 InputImgSize = (128, 128)
@@ -108,8 +108,7 @@ def imgRead(imgQueue):
         success, Img = cam.read()
 
         if success == True:
-            Img = cv2.resize(Img,(240,180),interpolation=cv2.INTER_AREA) #将opencv读取的图片resize来提高帧率
-
+            Img = cv2.resize(Img,(240,180),interpolation=cv2.INTER_AREA) #将opencv读取的图片resize来提高帧率=
 
             img = cv2.GaussianBlur(Img, (5, 5), 0)
             imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # 将BGR图像转为HSV
@@ -241,13 +240,8 @@ def imgRead(imgQueue):
                 green_light.publish(True)
                 print("pass")
 
-                    
-
-            
         # cmd_vel_pub=rospy.Publisher('/ackermann_cmd',AckermannDrive,queue_size=10) #queue_size其实是一个存放图像的buffer
         # cmd_vel_pub.publish(ark_contrl)
-
-        
 
         key = cv2.waitKey(5)
         if key == 27:

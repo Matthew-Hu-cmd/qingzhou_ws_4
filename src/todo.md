@@ -20,6 +20,7 @@
 	|---maybe a good thing 
 	|---but can still be changed by 1/(（1/car2goal_dist）* speed)
 	***git is shit***
+	GIT IS FUCKING TRIFFIC
 
 	4. 它tmd把bringup改了好多啊，加了视觉结果东西进来，目前还不知道是好事还是坏事：
    		（DONE 2022.6.8）
@@ -38,6 +39,11 @@
 			   我可以写一个自己的路径规划器，用一种讨巧的方式
 			   接收目标点之后，我的规划器分段发布对应的路径 -->
 	
+	6.ackermann_cmd_filter
+
+## 我直接救命啊，L1去装货区有的时候会冲出去
+## 出卸货区的时候有的时候会蹭到（小问题，画地图解决）
+## l1里面订阅的是/odom的pose，应该改成/amcl_pose,不过我感觉现在用着也没什么问题啊
 
 ## 三、视觉控制
 	1. 把图像传输功能去掉，过于占用资源

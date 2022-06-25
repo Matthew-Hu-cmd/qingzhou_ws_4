@@ -11,7 +11,7 @@ import rospy
 # import math
 # from Timer import *
 # from _02PipeDatasetLoader import *
-from _03Unet1 import *
+from Unet import *
 import multiprocessing as mp
 from cv_bridge import CvBridge,CvBridgeError #ROS和cv通道
 #from sensor_msgs.msg import CompressedImage  #压缩图像信息
@@ -167,7 +167,7 @@ def imgRead(imgQueue):
                 angle = angle - 10
             else:
                 angle = angle + 15
-        print(line_x,line_y)
+        # print(line_x,line_y)
 
         print(angle)
         angle = 0.7 * angle + 0.3 * old_angle
