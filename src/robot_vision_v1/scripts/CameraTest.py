@@ -35,7 +35,7 @@ def gstreamer_pipeline(
 	)
 
 if __name__ == "__main__":
-	Video = cv2.VideoCapture(1)
+	Video = cv2.VideoCapture(0)
 	while Video.isOpened():
 			ret,img = Video.read()
 			if ret:

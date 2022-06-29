@@ -11,7 +11,7 @@ from ackermann_msgs.msg import AckermannDrive  # 引用阿克曼的消息类型
 from std_msgs.msg import Bool
 from pickle import REDUCE, TRUE
 from PIL.Image import new
-from Marker import *
+# from Marker import *
 from Trafficlight import *
 from Gstreamer import *
 from handleImg import *
@@ -229,7 +229,7 @@ def pianyi_detect(img):
 
 if __name__ == '__main__':
     # 初始化设置
-    cam = cv2.VideoCapture(1)    #gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
+    cam = cv2.VideoCapture(0)    #gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
     freq = 5
     openColorDetector = 0
     controlFlag = 0

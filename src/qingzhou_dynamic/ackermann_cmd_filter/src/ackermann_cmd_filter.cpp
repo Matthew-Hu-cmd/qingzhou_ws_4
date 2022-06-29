@@ -4,6 +4,7 @@
 功  能：融合各个话题发布的ackermann控制数据，根据
 不同的路段，选择不同话题发布的ackermann_cmd数据
 dongtaitiaocan
+
 作者：胡杨
 ******************************************/
 
@@ -14,13 +15,15 @@ int main(int argc, char** argv)
 	//初始化ROS节点
 	setlocale(LC_ALL,"");
 	ros::init(argc, argv, "ackermann_cmd_filted_node");
-
+	AckermannCmdFilter ackermannCmdFilter;
+	ROS_INFO("ackermann_cmd_filter Finish");
+	return 0;
 }
 
 /******************************************
 Name ： AckermannCmdFilter
 Param: Null
-Func : constructor
+Func : 构造函数
 作 者 ：胡杨
 ******************************************/
 AckermannCmdFilter::AckermannCmdFilter()
@@ -29,22 +32,27 @@ AckermannCmdFilter::AckermannCmdFilter()
 	ros::NodeHandle pn("~");
 
     //Controller parameter
+	
     pn.param("controller_freq", controller_freq, 20);
 
 	//Publishers and Subscribers
-	odom_sub = nh.subscribe("/odom_ekf", 1, &AckermannCmdFilter::odomCB, this);
+	location_sub = nh.subscribe("/qingzhou_locate", 1, &AckermannCmdFilter::locateCB, this);
 	goal_sub = nh.subscribe("/move_base_simple/goal", 1, &AckermannCmdFilter::goalCB, this);
-	ackermannFromOdom_sub = nh.subscribe("话题名", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
-	ackermannFromVision_sub = nh.subscribe("话题名", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
+	ackermannFromOdom_sub = nh.subscribe("/ackermann_cmd", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
+	ackermannFromVision_sub = nh.subscribe("/ackermannFromVision_sub", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
 	ackermannCmdFilted_pub = nh.advertise<ackermann_msgs::AckermannDrive>("ackermann_cmd_filted", 1);
 
+	locate_cli = nh.serviceClient<qingzhou_locate::RobotLocation>("qingzhou_locate");
 	//Timer
 	timer1 = nh.createTimer(ros::Duration((1.0)/controller_freq), &AckermannCmdFilter::controlLoopCB, this); // Duration(0.05) -> 20Hz
-	timer2 = nh.createTimer(ros::Duration((1.0)/5), &AckermannCmdFilter::robotLocationCB, this);
-
-	client = new dynamic_reconfigure::Client<qingzhou_nav::L1_dynamicConfig> ("/L1_controller_v3", 10, &AckermannCmdFilter::dynamicCB);
 	
 	ROS_INFO_STREAM("[param] controller_freq: " << controller_freq); 
+	ROS_INFO_STREAM("Wait For Services");
+	//等待服务端启动
+	locate_cli.waitForExistence();
+	ROS_INFO("Filter Start");
+
+	ros::spin();
 }
 
 /******************************************
@@ -64,7 +72,7 @@ Name ： ackermannCmdFromVisionCB
 Param: Null
 Func : Call back func, get Ackermann msgs 
        from vision (hai mei xie)
-作 者 ：胡杨
+作 者 ：0E
 ******************************************/
 void AckermannCmdFilter::ackermannCmdFromVisionCB(const ackermann_msgs::AckermannDrive::ConstPtr& msgs)
 {
@@ -74,109 +82,76 @@ void AckermannCmdFilter::ackermannCmdFromVisionCB(const ackermann_msgs::Ackerman
 /******************************************
 Name ： controlLoopCB
 Param: Null
-Func : pub Ackermann msgs according to 
+Func : pub Ackermann msgs to bringup according to 
        position
-作 者 ：胡杨
+作 者 ：0E
 ******************************************/
 void AckermannCmdFilter::controlLoopCB(const ros::TimerEvent&)
 {
 	//Use ackermann msgs from odom
-	if ((robotLocation != LoadToTrafficLight) && (robotLocation != RoadLine))
+	if ((robotLocation != LoadToTrafficLight) && (robotLocation != TrafficLight) &&
+		(robotLocation != RoadLineToStart) && (robotLocation != RoadLine))
 	{
 		ackermannCmdFilted = ackermannCmdFromOdom;
 	}
 	//Use ackermann msgs from vision
-	else if (robotLocation == LoadToTrafficLight || (robotLocation == RoadLine))
+	else if (robotLocation == LoadToTrafficLight || robotLocation == TrafficLight ||
+		robotLocation == RoadLineToStart || robotLocation == RoadLine)
 	{
 		ackermannCmdFilted = ackermannCmdFromVision;
 	}
 	//Stop
 	else
 	{
-		ackermannCmdFilted.speed = 0;
+		ackermannCmdFilted.speed = 0.0;
+		ackermannCmdFilted.steering_angle = 0.0;
 	}
 	//publish ackermann msgs filted
 	ackermannCmdFilted_pub.publish(ackermannCmdFilted);
 }
 
 /******************************************
-Name : robotLocationCB
-Param: Null
-Func : get robotLocation
-作 者 ：胡杨
-******************************************/
-void AckermannCmdFilter::robotLocationCB(const ros::TimerEvent&)
-{
-	if (0)
-	{
-		robotLocation = StartToLoad;
-	}
-	else if (0)
-	{
-		robotLocation = LoadToTrafficLight;
-	}
-	else if (0)
-	{
-		robotLocation = TrafficLightToUnload;
-	}
-	else if (0)
-	{
-		robotLocation = UnloadToRoadLine;
-	}
-	else if (0)
-	{
-		robotLocation = RoadLine;
-	}
-	else if (0)
-	{
-		robotLocation = RoadLineToStart;
-	}
-	else
-	{
-		robotLocation = Unknown;
-	}
-
-}
-
-/******************************************
-Name : odomCB
-Param: Null
-Func : get odom msgs from ekf
-作 者 ：胡杨
-******************************************/
-void AckermannCmdFilter::odomCB(const nav_msgs::Odometry::ConstPtr& odomMsg)
-{
-    odom = *odomMsg;
-}
-
-/******************************************
 Name : goalCB
 Param: Null
-Func : get goal msgs from move_base
+Func : 得到目标点后，从qingzhou_locate那获取
+		一次位置信息
 作 者 ：胡杨
 ******************************************/
 void AckermannCmdFilter::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg)
 {
-    try
-    {
-        geometry_msgs::PoseStamped odom_goal;
-        odom_goal_pos = odom_goal.pose.position;
-    }
-    catch(tf::TransformException &ex)
-    {
-        ROS_ERROR("%s",ex.what());
-        ros::Duration(1.0).sleep();
-    }
+	if (locateCallService() == true)
+	{
+		ROS_INFO("请求正常处理,响应结果:%d", locate.response.location);
+		robotLocation = RobotLocation(locate.response.location);
+	}
+	else
+	{
+		ROS_ERROR("请求处理失败....");
+	}
 }
 
-
 /******************************************
-Name : DynamicParameters
+Name : locateCallService
 Param: Null
-Func : get goal msgs from move_base
+Func : 向qingzhou_locate那发送请求，得到位置
 作 者 ：胡杨
 ******************************************/
-void AckermannCmdFilter::DynamicParameters()
+bool AckermannCmdFilter::locateCallService()
 {
-	if 
+	return locate_cli.call(locate);
+}
+
+/******************************************
+Name : locateCB
+Param: Null
+Func : 得到话题发布的位置信息
+作 者 ：胡杨
+******************************************/
+void AckermannCmdFilter::locateCB(const std_msgs::Int32& data)
+{
+	robotLocation = RobotLocation(data.data);
+	if (ros::param::param("Debug", false))
+	{
+		ROS_INFO("Receive Location: %d", robotLocation);
+	}
 }

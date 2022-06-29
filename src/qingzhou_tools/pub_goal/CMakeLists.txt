@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(qingzhou_server)
+project(pub_goal)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,11 +8,13 @@ project(qingzhou_server)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
+  actionlib
+  geometry_msgs
+  move_base_msgs
   roscpp
   rospy
-  serial
   std_msgs
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,7 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   geometry_msgs#   std_msgs
 # )
 
 ################################################
@@ -106,8 +108,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES qingzhou_server
-#  CATKIN_DEPENDS roscpp rospy serial std_msgs
+#  LIBRARIES pub_goal
+#  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -119,13 +121,12 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-  include/qingzhou_server
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/qingzhou_server.cpp
+#   src/${PROJECT_NAME}/pub_goal.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -136,9 +137,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/qingzhou_server_node.cpp)
-add_executable(TCP_Sender_node src/TCP_Sender_node.cpp src/TCP_Sender.cpp src/robot_states_msgs.cpp) 
-# add_executable(${PROJECT_NAME}_node src/qingzhou_server_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/pub_goal_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -149,12 +148,11 @@ add_executable(TCP_Sender_node src/TCP_Sender_node.cpp src/TCP_Sender.cpp src/ro
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(TCP_Sender_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(TCP_Sender_node
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -203,10 +201,14 @@ target_link_libraries(TCP_Sender_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_qingzhou_server.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_pub_goal.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(pub_goal src/pub_goal.cpp)
+add_dependencies(pub_goal ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pub_goal ${catkin_LIBRARIES})

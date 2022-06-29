@@ -1,3 +1,4 @@
+#!/usr/lib/python3.6
 # -*- coding:utf-8 _*-
 
 from glob import iglob

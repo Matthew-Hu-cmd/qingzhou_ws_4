@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node name="qingzhou_locate" pkg="qingzhou_locate" type="qingzhou_locate" output="screen">
+	<param name="DeBug" value="true"/>
+  </node>
+</launch>

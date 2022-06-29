@@ -6,20 +6,24 @@
 
 作者：胡杨
 ******************************************/
+
 #ifndef __ACKERMANN_CMD_FILTER__
 #define __ACKERMANN_CMD_FILTER__
 
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
+#include <tf/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <ackermann_msgs/AckermannDrive.h>
-#include "dynamic_reconfigure/client.h"
-#include "qingzhou_nav/L1_dynamicConfig.h"
+#include "qingzhou_locate/RobotLocation.h"
+#include <std_msgs/Int32.h>
 
-enum RobotLocation 
+//用于机器人路段确定
+enum RobotLocation : int
 {
-	Start, StartToLoad, Load, LoadToTrafficLight, TrafficLightToUnload,
-	Unload, UnloadToRoadLine, RoadLine, RoadLineToStart, Unknown
+	Start, Load, TrafficLight ,Unload, RoadLine, 
+	RoadLineToStart, StartToLoad, LoadToTrafficLight, TrafficLightToUnload, UnloadToRoadLine,
+	Unknown
 };
 
 class AckermannCmdFilter
@@ -29,34 +33,34 @@ private:
 
 	//发布AckermannCmdFilted话题
 	ros::Publisher ackermannCmdFilted_pub;
-	ros::Subscriber odom_sub, ackermannFromOdom_sub, ackermannFromVision_sub;
+	ros::Subscriber location_sub, goal_sub, ackermannFromOdom_sub, ackermannFromVision_sub;
 
+	//客户端
+	qingzhou_locate::RobotLocation locate;
+	ros::ServiceClient locate_cli;
+	
+	//由定时器控制控制机器人的频率，控制函数为回调函数
 	ros::Timer timer1;
-	ros::Timer timer2;
-
-	dynamic_reconfigure::Client<qingzhou_nav::L1_dynamicConfig>* client;
 
 	ackermann_msgs::AckermannDrive ackermannCmdFilted, ackermannCmdFromOdom, ackermannCmdFromVision;
 
 	//RobotLocation robotLocation;机器人位置信息
-	geometry_msgs::Odometry odom;
-	geometry_msgs::Point odom_goal_pos;
 	RobotLocation robotLocation;
 
 	int controller_freq;
 
 	//Call Back
+	void locateCB(const std_msgs::Int32& data);
 	void ackermannCmdFromOdomCB(const ackermann_msgs::AckermannDrive::ConstPtr& msgs);
 	void ackermannCmdFromVisionCB(const ackermann_msgs::AckermannDrive::ConstPtr& msgs);
     void controlLoopCB(const ros::TimerEvent&);
-	void robotLocationCB(const ros::TimerEvent&);
-	void odomCB(const nav_msgs::Odometry::ConstPtr& odomMsg);
 	void goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg);
-	void dynamicCB(const )
+
+	bool locateCallService();
+
 public:
 	AckermannCmdFilter();
-	~AckermannCmdFilter();
-	void DynamicParameters();
+	// void DynamicParameters();
 };
 
 

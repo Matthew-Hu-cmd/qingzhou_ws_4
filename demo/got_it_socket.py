@@ -1,4 +1,3 @@
-#!/usr/bin/python2
 #coding:utf-8
 
 from nav_msgs.msg import Odometry

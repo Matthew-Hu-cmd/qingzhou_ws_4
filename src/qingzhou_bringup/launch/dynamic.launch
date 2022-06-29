@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<launch>
+    <include file="$(find qingzhou_locate)/launch/locate.launch" />
+    <include file="$(find ackermann_cmd_filter)/launch/ackermann_cmd_filter.launch" />
+</launch>

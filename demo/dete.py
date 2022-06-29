@@ -1,3 +1,4 @@
+#!/usr/lib/python3.6
 # -*- coding:utf-8 _*-
 from pickle import REDUCE, TRUE
 from PIL.Image import new
@@ -87,7 +88,7 @@ def gstreamer_pipeline(
             )
     )
 
-cam = cv2.VideoCapture(1)#gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
+cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)   #gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
 rospy.init_node('linetrack', anonymous=False)
 
 green_light = rospy.Publisher('/traffic_light',Bool,queue_size=10)#ture检测到绿灯

@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   actionlib
   tf2_ros
+  dynamic_reconfigure
 )
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -161,6 +162,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
  add_executable(${PROJECT_NAME} src/qingzhou_bringup.cpp src/qingzhou_bringup_node.cpp)
  add_executable(TCP_Send_node src/TCP_Sender.cpp src/TCP_Send_Node.cpp)
+#  add_executable(ackermann_cmd_filter src/ackermann_cmd_filter.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -171,6 +174,8 @@ include_directories(
 ## same as for the library above
  add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
  add_dependencies(TCP_Send_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#  add_dependencies(ackermann_cmd_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 ## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
@@ -178,6 +183,9 @@ include_directories(
  target_link_libraries(TCP_Send_node
  ${catkin_LIBRARIES} ${Boost_LIBRARIES}
 )
+# target_link_libraries(ackermann_cmd_filter
+# ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+# )
 #############
 ## Install ##
 #############
