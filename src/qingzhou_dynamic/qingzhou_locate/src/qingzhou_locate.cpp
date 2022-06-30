@@ -65,15 +65,78 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 		locationPub();
 		return;
 	}
-	//通过判断机器人坐标是否在目标点范围内，若不在目标点范围内，就是在去目标点的路上
-	if (odom.pose.pose.position.x > goalPoint.x1[goalLocation] && odom.pose.pose.position.x < goalPoint.x2[goalLocation] && 
-		odom.pose.pose.position.y > goalPoint.y1[goalLocation] && odom.pose.pose.position.y < goalPoint.y2[goalLocation])
+
+	switch (goalLocation)
 	{
-		robotLocation = goalLocation;
-	}
-	else
-	{
-		robotLocation = RobotLocation(goalLocation + 5);
+		//是否在装货区
+		case Load:
+			if (odom.pose.pose.position.x > goalPoint.x1[Load] 
+			&& odom.pose.pose.position.x < goalPoint.x2[Load] 
+			&& odom.pose.pose.position.y > goalPoint.y1[Load] 
+			&& odom.pose.pose.position.y < goalPoint.y2[Load])
+			{
+				robotLocation = goalLocation;
+			}	
+			else
+			{
+				robotLocation = RobotLocation(goalLocation + 5);
+			}
+			break;
+
+		//是否在卸货区或路上的其他区域
+		case Unload:
+			if (lastLocation == Load)
+			{
+				robotLocation = LoadToTrafficLight;
+			}
+			else if(lastLocation == LoadToTrafficLight 
+			&& odom.pose.pose.position.x > goalPoint.x1[TrafficLight] 
+			&& odom.pose.pose.position.x < goalPoint.x2[TrafficLight] 
+			&& odom.pose.pose.position.y > goalPoint.y1[TrafficLight]
+			&& odom.pose.pose.position.y < goalPoint.y2[TrafficLight])
+			{
+				robotLocation = TrafficLight;
+			}
+			else if(lastLocation == TrafficLight)
+			{
+				robotLocation = TrafficLightToUnload;
+			}
+			else if(lastLocation == TrafficLightToUnload 
+			&& odom.pose.pose.position.x > goalPoint.x1[Unload] 
+			&& odom.pose.pose.position.x < goalPoint.x2[Unload] 
+			&& odom.pose.pose.position.y > goalPoint.y1[Unload]
+			&& odom.pose.pose.position.y < goalPoint.y2[Unload])
+			{
+				robotLocation = Unload;
+			}
+			break;
+		
+		//是否在起始区
+		case Start:
+			if (lastLocation == Unload)
+			{
+				robotLocation = UnloadToRoadLine;
+			}
+			else if(lastLocation == UnloadToRoadLine 
+			&& odom.pose.pose.position.x > goalPoint.x1[RoadLine] 
+			&& odom.pose.pose.position.x < goalPoint.x2[RoadLine] 
+			&& odom.pose.pose.position.y > goalPoint.y1[RoadLine]
+			&& odom.pose.pose.position.y < goalPoint.y2[RoadLine])
+			{
+				robotLocation = RoadLine;
+			}
+			else if(lastLocation == RoadLine
+			&& odom.pose.pose.position.x > goalPoint.x1[Start] 
+			&& odom.pose.pose.position.x < goalPoint.x2[Start] 
+			&& odom.pose.pose.position.y > goalPoint.y1[Start]
+			&& odom.pose.pose.position.y < goalPoint.y2[Start])
+			{
+				robotLocation = Start;
+			}
+			break;
+
+		default:
+			break;
 	}
 	locationPub();
 }
@@ -131,9 +194,6 @@ void Locate::locationPub()
 		std_msgs::Int32 data;
 		data.data = int(robotLocation);
 		location_pub.publish(data);
-		if (ros::param::param("DeBug", true))
-		{
-			ROS_INFO("Publish Location: %d", robotLocation);
-		}
+		ROS_INFO("Publish Location: %d", robotLocation);
 	}
 }

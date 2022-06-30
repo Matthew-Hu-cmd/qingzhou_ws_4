@@ -39,8 +39,8 @@ AckermannCmdFilter::AckermannCmdFilter()
 	location_sub = nh.subscribe("/qingzhou_locate", 1, &AckermannCmdFilter::locateCB, this);
 	goal_sub = nh.subscribe("/move_base_simple/goal", 1, &AckermannCmdFilter::goalCB, this);
 	ackermannFromOdom_sub = nh.subscribe("/ackermann_cmd", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
-	ackermannFromVision_sub = nh.subscribe("/ackermannFromVision_sub", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
-	ackermannCmdFilted_pub = nh.advertise<ackermann_msgs::AckermannDrive>("ackermann_cmd_filted", 1);
+	ackermannFromVision_sub = nh.subscribe("/vision_control", 10, &AckermannCmdFilter::ackermannCmdFromVisionCB, this);
+	ackermannCmdFilted_pub = nh.advertise<ackermann_msgs::AckermannDrive>("/ackermann_cmd_filted", 1);
 	// Rubbish
 	// locate_cli = nh.serviceClient<qingzhou_locate::RobotLocation>("qingzhou_locate");
 	//Timer
@@ -77,6 +77,7 @@ Func : Call back func, get Ackermann msgs
 void AckermannCmdFilter::ackermannCmdFromVisionCB(const ackermann_msgs::AckermannDrive::ConstPtr& msgs)
 {
 	ackermannCmdFromVision = *msgs;
+	// ROS_INFO("speed: %f", ackermannCmdFromVision.speed);
 }
 
 /******************************************
@@ -89,16 +90,17 @@ Func : pub Ackermann msgs to bringup according to
 void AckermannCmdFilter::controlLoopCB(const ros::TimerEvent&)
 {
 	//Use ackermann msgs from odom
-	if ((robotLocation != LoadToTrafficLight) && (robotLocation != TrafficLight) &&
-		(robotLocation != RoadLineToStart) && (robotLocation != RoadLine))
+	if ((robotLocation != TrafficLight) &&
+		(robotLocation != RoadLine))
 	{
 		ackermannCmdFilted = ackermannCmdFromOdom;
 	}
 	//Use ackermann msgs from vision
-	else if (robotLocation == LoadToTrafficLight || robotLocation == TrafficLight ||
-		robotLocation == RoadLineToStart || robotLocation == RoadLine)
+	else if (robotLocation == TrafficLight ||
+	 robotLocation == RoadLine)
 	{
 		ackermannCmdFilted = ackermannCmdFromVision;
+		// ROS_INFO("Vision: speed: %f", ackermannCmdFilted.speed);
 	}
 	//Stop
 	else

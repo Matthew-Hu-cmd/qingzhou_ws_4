@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-    <include file="$(find qingzhou_bringup)/launch/qingzhou_bringup.launch" />
+	<arg name="use_dynamic" value="true" />
+    <include file="$(find qingzhou_bringup)/launch/qingzhou_bringup.launch">
+		<arg name="use_vision" value="$(arg use_dynamic)"/>
+	</include>
+	
     <include file="$(find qingzhou_nav)/launch/l1_nav_blind.launch" />
+	<include file="$(find qingzhou_bringup)/launch/dynamic.launch" if="$(arg use_dynamic)"/>
+
     <!-- <include file="$(find robot_vision)/launch/final_dete.launch" /> -->
 </launch>

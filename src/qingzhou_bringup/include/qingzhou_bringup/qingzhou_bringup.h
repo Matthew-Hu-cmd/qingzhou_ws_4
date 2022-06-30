@@ -66,6 +66,7 @@ public:
      int cartype;
      std::string updatelog;
      std::string m_serialport;  //对应USB端口
+	 std::string ackermann_cmd_str;	//对应接收控制信息的话题名
      
      int encoderLeft;           //左编码器
      int encoderRight;          //右编码器

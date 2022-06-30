@@ -189,18 +189,11 @@ def work(img):
     print(angle)
 
 if __name__ == '__main__':
-    # pool = Pool(4)
-    idx = 0
-    cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-    time1 = time.time()
-    while cam.isOpened():
-        _ , img = cam.read()
-        result = work(img)
-        idx += 1
-        if idx > 1000:
+    while True:
+        while True:
+            cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+            time.sleep(5)
             break
-    cam.release()
-    print(time.time()-time1)
 
 
 

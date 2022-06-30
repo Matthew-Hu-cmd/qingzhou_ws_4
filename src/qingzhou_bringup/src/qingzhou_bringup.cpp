@@ -32,6 +32,7 @@ actuator::actuator(ros::NodeHandle handle)
    handle.param("calibrate_angularSpeed",calibrate_angularSpeed,calibrate_angularSpeed);
    handle.param("ticksPerMeter",ticksPerMeter,ticksPerMeter);                           
    handle.param("ticksPer2PI",ticksPer2PI,ticksPer2PI);
+   handle.param("ackermann_cmd",ackermann_cmd_str,std::string("/ackermann_cmd"));
 
     try{ 
       std::cout<<"[qingzhou_actuator-->]"<<"Serial initialize start!"<<std::endl;              
@@ -51,7 +52,7 @@ actuator::actuator(ros::NodeHandle handle)
       std::cout<<"[qingzhou_actuator-->]"<<"Serial port failed!"<<std::endl;                  
     } 
 
-    sub_move_base = handle.subscribe("ackermann_cmd",1,&actuator::callback_move_base,this);   
+    sub_move_base = handle.subscribe(ackermann_cmd_str,1,&actuator::callback_move_base,this);   
     sub_reached = handle.subscribe("/detector_line",1,&actuator::callback_reached,this);
     sub_reach = handle.subscribe("/reached",1,&actuator::reach_cb,this);
     pub_imu = handle.advertise<sensor_msgs::Imu>("raw", 5);	                                                 

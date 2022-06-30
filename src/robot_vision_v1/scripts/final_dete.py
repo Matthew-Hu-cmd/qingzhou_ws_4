@@ -3,7 +3,7 @@
 
 功  能：视觉 S弯
 
-作者: 0E
+作  者:  0E
 #####################################'''
 
 #!/usr/lib/python3.6
@@ -11,10 +11,14 @@
 
 import cv2
 import numpy as np
+import queue
 import rospy
 import sys
 import signal
 from ackermann_msgs.msg import AckermannDrive
+from std_msgs.msg import Int32
+
+funcQueue = queue.Queue()
 
 def quit():
     sys.exit()
@@ -48,6 +52,12 @@ def gstreamer_pipeline(
 				display_height,
 			)
 	)
+
+def getFunc(sub):
+	if sub.data == 4:
+		funcQueue.put("line")
+	if sub.data == 7:
+		funcQueue.put("trafficlight")
 
 # 提取ROI部分，根据传入的x， y参数确定提取的范围
 def ROI_Img(img, x, y):
@@ -114,8 +124,9 @@ def getShift(img):
 				shift = -np.degrees(np.arctan(float(320-cy)/float(cx + 200)))
 			elif text == 'right':
 				shift = np.degrees(np.arctan(float(320-cy)/float(cx + 200))) - 8.5    
-				if shift < -18:
-					shift = -18     # 限制右转角度，右转角度太大会擦到车道线
+				if shift < -19:
+					shift = -19     # 限制右转角度，右转角度太大会擦到车道线
+		# print(shift)
 		return shift
 
 if __name__ =='__main__':
@@ -125,37 +136,62 @@ if __name__ =='__main__':
 
 	# ros节点设置
 	ark_contrl = AckermannDrive()
-	rospy.init_node("ackermann_cmd")
-	cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
+
+	rospy.init_node("vision_control")
+	# cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
+	cmd_vel_pub = rospy.Publisher('/vision_control', AckermannDrive, queue_size=10)
+	locate_pub = rospy.Publisher("/qingzhou_locate", Int32, queue_size=1)
+
+	func_sub = rospy.Subscriber('/qingzhou_locate', Int32, getFunc)
+
 	rate = rospy.Rate(100)
 
 	try:
 		rospy.loginfo("line detector is started...")
 		while not rospy.is_shutdown():
-			rate.sleep()
-			ret,img = Video.read()
-			if not ret:
-				print('img is none')
-				break
-			else:
-				pre_Img = ROI_Img(img, 0, 90)
-				shift = getShift(pre_Img)
 
-				if shift:
-					ark_contrl.speed = 1.2
-					ark_contrl.steering_angle = shift
-					print(ark_contrl.steering_angle)
-					cmd_vel_pub.publish(ark_contrl)
-				else:
-					out_check += 1
-				
-				# 出弯判断
-				if out_check > 10:
-					ark_contrl.speed = 0
-					ark_contrl.steering_angle = 0
-					cmd_vel_pub.publish(ark_contrl)
-					print('out, stop')
-					out_check = 0
+			func = funcQueue.get()
+
+			# 清除视频缓存
+			for i in range(10):
+				ret = Video.grab()
+
+			if func == "line":
+				while Video.isOpened():
+					rate.sleep()
+					ret,img = Video.read()
+					if not ret:
+						print('img is none')
+						break
+					else:
+						pre_Img = ROI_Img(img, 0, 90)
+						shift = getShift(pre_Img)
+
+						if shift:
+							ark_contrl.speed = 1.2
+							ark_contrl.steering_angle = shift
+							ark_contrl.steering_angle_velocity = 5
+							print(ark_contrl.steering_angle)
+							cmd_vel_pub.publish(ark_contrl)
+							out_check = 0
+						else:
+							out_check += 1
+						
+						# 出弯判断
+						if out_check > 10:
+							ark_contrl.speed = 0
+							ark_contrl.steering_angle = 0
+							cmd_vel_pub.publish(ark_contrl)
+							print('out, stop')
+							out_check = 0
+							break
+				locate_pub.publish(5)
+
+				print("navigation start")
+			elif func == "trafficlight":
+				locate_pub.publish(8)
+				print("open light")
+
 	finally:
 		print('End')
 		Video.release() 
