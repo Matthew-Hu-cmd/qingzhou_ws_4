@@ -56,7 +56,7 @@ Func : amcl_pose订阅者的回调函数，可以获取小车位置
 void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& odomMsg)
 {
 	odom = *odomMsg;
-	ROS_INFO("Odom Received!");
+	// ROS_INFO("Odom Received!");
 	// ROS_INFO_STREAM("Robot x: " << odom.pose.pose.position.x << "Robot y: " << odom.pose.pose.position.y);
 	//以下代码可以用定时器另外写一个函数实现，不知道哪种更好
 	if (goalLocation == Unknown)
@@ -131,7 +131,7 @@ void Locate::locationPub()
 		std_msgs::Int32 data;
 		data.data = int(robotLocation);
 		location_pub.publish(data);
-		if (ros::param::param("DeBug", false))
+		if (ros::param::param("DeBug", true))
 		{
 			ROS_INFO("Publish Location: %d", robotLocation);
 		}

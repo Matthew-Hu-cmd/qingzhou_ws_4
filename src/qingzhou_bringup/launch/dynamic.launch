@@ -2,4 +2,5 @@
 <launch>
     <include file="$(find qingzhou_locate)/launch/locate.launch" />
     <include file="$(find ackermann_cmd_filter)/launch/ackermann_cmd_filter.launch" />
+    <node name="dynamic_parameters" pkg="dynamic_parameters" type="dynamic_parameters" output="screen"/>
 </launch>

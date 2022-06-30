@@ -34,14 +34,15 @@ private:
 	//发布AckermannCmdFilted话题
 	ros::Publisher ackermannCmdFilted_pub;
 	ros::Subscriber location_sub, goal_sub, ackermannFromOdom_sub, ackermannFromVision_sub;
-
+	
 	//客户端
 	qingzhou_locate::RobotLocation locate;
-	ros::ServiceClient locate_cli;
+	// ros::ServiceClient locate_cli;
 	
 	//由定时器控制控制机器人的频率，控制函数为回调函数
 	ros::Timer timer1;
 
+	geometry_msgs::PoseStamped goal;
 	ackermann_msgs::AckermannDrive ackermannCmdFilted, ackermannCmdFromOdom, ackermannCmdFromVision;
 
 	//RobotLocation robotLocation;机器人位置信息
@@ -56,7 +57,7 @@ private:
     void controlLoopCB(const ros::TimerEvent&);
 	void goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg);
 
-	bool locateCallService();
+	// bool locateCallService();
 
 public:
 	AckermannCmdFilter();

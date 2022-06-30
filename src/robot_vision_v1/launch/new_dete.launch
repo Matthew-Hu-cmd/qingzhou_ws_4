@@ -1,4 +1,0 @@
-<launch>
-    <node pkg="robot_vision" name="detector" type="combine_dete.py" output="screen">
-    </node>
-</launch>

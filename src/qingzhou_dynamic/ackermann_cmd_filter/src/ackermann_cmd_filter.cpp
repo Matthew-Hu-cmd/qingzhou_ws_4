@@ -41,15 +41,15 @@ AckermannCmdFilter::AckermannCmdFilter()
 	ackermannFromOdom_sub = nh.subscribe("/ackermann_cmd", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
 	ackermannFromVision_sub = nh.subscribe("/ackermannFromVision_sub", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
 	ackermannCmdFilted_pub = nh.advertise<ackermann_msgs::AckermannDrive>("ackermann_cmd_filted", 1);
-
-	locate_cli = nh.serviceClient<qingzhou_locate::RobotLocation>("qingzhou_locate");
+	// Rubbish
+	// locate_cli = nh.serviceClient<qingzhou_locate::RobotLocation>("qingzhou_locate");
 	//Timer
 	timer1 = nh.createTimer(ros::Duration((1.0)/controller_freq), &AckermannCmdFilter::controlLoopCB, this); // Duration(0.05) -> 20Hz
 	
 	ROS_INFO_STREAM("[param] controller_freq: " << controller_freq); 
 	ROS_INFO_STREAM("Wait For Services");
 	//等待服务端启动
-	locate_cli.waitForExistence();
+	// locate_cli.waitForExistence();
 	ROS_INFO("Filter Start");
 
 	ros::spin();
@@ -119,26 +119,18 @@ Func : 得到目标点后，从qingzhou_locate那获取
 ******************************************/
 void AckermannCmdFilter::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg)
 {
-	if (locateCallService() == true)
+	goal = *goalMsg;
+	ROS_INFO("Goal Received");
+	//Whether Traffic Light or Roadline
+	if (false)
 	{
-		ROS_INFO("请求正常处理,响应结果:%d", locate.response.location);
-		robotLocation = RobotLocation(locate.response.location);
+
 	}
 	else
 	{
-		ROS_ERROR("请求处理失败....");
+		
 	}
-}
 
-/******************************************
-Name : locateCallService
-Param: Null
-Func : 向qingzhou_locate那发送请求，得到位置
-作 者 ：胡杨
-******************************************/
-bool AckermannCmdFilter::locateCallService()
-{
-	return locate_cli.call(locate);
 }
 
 /******************************************
@@ -150,7 +142,7 @@ Func : 得到话题发布的位置信息
 void AckermannCmdFilter::locateCB(const std_msgs::Int32& data)
 {
 	robotLocation = RobotLocation(data.data);
-	if (ros::param::param("Debug", false))
+	if (ros::param::param("Debug", true))
 	{
 		ROS_INFO("Receive Location: %d", robotLocation);
 	}

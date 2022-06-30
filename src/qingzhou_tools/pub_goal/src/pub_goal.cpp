@@ -8,13 +8,10 @@
 
 #include <ros/ros.h>
 #include <stdlib.h>
-#include <move_base_msgs/MoveBaseAction.h>
 #include <tf/tf.h>
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
-
-typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 int main(int argc, char** argv)
 {
@@ -27,39 +24,31 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "pub_goal_node");
 	ros::NodeHandle nh;
 
-	MoveBaseClient ac("move_base", true);
-	
-	while(!ac.waitForServer(ros::Duration(5.0)))
-	{
-        ROS_INFO("Waiting for the move_base action server to come up");
-    }
+	ros::Publisher pub;
+	pub = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
 
-	move_base_msgs::MoveBaseGoal goal;
-	goal.target_pose.header.frame_id = "map";
-	goal.target_pose.header.stamp = ros::Time::now();
+	geometry_msgs::PoseStamped goal;
+	goal.header.frame_id = "map";
+	goal.header.stamp = ros::Time::now();
 	
-	goal.target_pose.pose.position.x = atof(argv[1]);
-	goal.target_pose.pose.position.y = atof(argv[2]);
-	goal.target_pose.pose.position.z = 0.0;
+	goal.pose.position.x = atof(argv[1]);
+	goal.pose.position.y = atof(argv[2]);
+	goal.pose.position.z = 0.0;
 	
 	geometry_msgs::Quaternion quaternion;
 	quaternion = tf::createQuaternionMsgFromYaw(atof(argv[3]));
-	goal.target_pose.pose.orientation.w = quaternion.w;
-	goal.target_pose.pose.orientation.x = quaternion.x;
-	goal.target_pose.pose.orientation.y = quaternion.y;
-	goal.target_pose.pose.orientation.z = quaternion.z;
+	goal.pose.orientation.w = quaternion.w;
+	goal.pose.orientation.x = quaternion.x;
+	goal.pose.orientation.y = quaternion.y;
+	goal.pose.orientation.z = quaternion.z;
 
-	ROS_INFO(" Init success!!! ");
-
-	ac.sendGoal(goal);
-	ROS_INFO("Send Goal !!!");
-	ac.waitForResult();
-	if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+	// ROS_INFO("%f %f %f %f %f %f %f", goal.pose.position.x, goal.pose.position.y, goal.pose.position.z,
+	// goal.pose.orientation.w, goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z);
+	while(ros::ok())
 	{
-            ROS_INFO("The Goal achieved success !!!");
-    }else
-	{
-		ROS_WARN("The Goal Planning Failed for some reason"); 
+		pub.publish(goal);
+		ROS_INFO("Send Goal !!!");
+		ros::Rate(1).sleep();
 	}
 
 	return 0;

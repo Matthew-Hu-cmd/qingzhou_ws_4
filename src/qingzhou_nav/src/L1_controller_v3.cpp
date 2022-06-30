@@ -404,7 +404,7 @@ void L1Controller::controlLoopCB(const ros::TimerEvent&)
                 //double u = getGasInput(carVel.linear.x);
                 //cmd_vel.linear.x = baseSpeed - u;
                 ackermann_cmd.speed = base_speed;
-                ROS_INFO("\nGas = %.2f\nSteering angle = %.2f",ackermann_cmd.speed,ackermann_cmd.steering_angle);
+                // ROS_INFO("\nGas = %.2f\nSteering angle = %.2f",ackermann_cmd.speed,ackermann_cmd.steering_angle);
                 //ROS_DEBUG("\nGas = %.2f\nSteering angle = %.2f",ackermann_cmd.speed,ackermann_cmd.steering_angle);
             }
         }

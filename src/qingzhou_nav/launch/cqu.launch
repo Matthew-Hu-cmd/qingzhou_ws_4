@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
     <include file="$(find qingzhou_bringup)/launch/qingzhou_bringup.launch" />
-    <include file="$(find qingzhou_nav)/launch/l1_nav_pure_v3.launch" />
-    <!-- <include file="$(find robot_vision)/launch/new_dete.launch" /> -->
+    <include file="$(find qingzhou_nav)/launch/l1_nav_blind.launch" />
+    <!-- <include file="$(find robot_vision)/launch/final_dete.launch" /> -->
 </launch>

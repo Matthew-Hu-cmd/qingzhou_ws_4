@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 #include <stdio.h>
 #include <boost/function.hpp>
+#include <std_msgs/Int32.h>
 #include "qingzhou_locate/RobotLocation.h"
 #include "dynamic_reconfigure/config_tools.h"
 #include "dynamic_reconfigure/client.h"
@@ -95,11 +96,15 @@ class DynamicParameters
 {
 private:
 	ros::NodeHandle nh;
+	ros::Subscriber locate_sub;
+
 	RobotLocation robotLocation;
 	// qingzhou_nav::L1_dynamicConfig config;
 	ParametersConfig paramConfig;
 
 	dynamic_reconfigure::Client<qingzhou_nav::L1_dynamicConfig>* client;
+
+	void locateCB(const std_msgs::Int32& data);
 public:
 	DynamicParameters();
 	~DynamicParameters();

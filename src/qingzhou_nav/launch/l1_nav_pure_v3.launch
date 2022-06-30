@@ -13,13 +13,12 @@
 
     <!-- Navigation -->
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-<!-- costmap layers -->   
+        <!-- costmap layers -->   
         <rosparam file="$(find qingzhou_nav)/config/l1_local_costmap_params.yaml" command="load" />
         <rosparam file="$(find qingzhou_nav)/config/l1_global_costmap_params.yaml" command="load" />
-<!-- move_base params -->
+        <!-- move_base params -->
         <rosparam file="$(find qingzhou_nav)/launch/includes/move_base_params.yaml" command="load"/>
     </node>
-
 
     <node pkg="qingzhou_nav" type="L1_controller_v3" respawn="false" name="L1_controller_v3" output="screen">       
         <!-- L1 -->
