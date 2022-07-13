@@ -1,0 +1,37 @@
+#
+#   http://wiki.ros.org/global_planner
+#
+
+GlobalPlanner:
+  # 是否允许规划器规划穿过未知区域的路径,只设计该参数为true还不行,还要在
+  # costmap_commons_params.yaml中设置track_unknown_space参数也为true才行。
+  allow_unknown: true
+  # 当设置的目的地被障碍物占据时,需要以该参数为半径寻找到最近的点作为新目的地点.
+  default_tolerance: 0.0
+  # 是否显示从PointCloud2计算得到的势区域
+  visualize_potential: false
+  # 设置为true,将使用dijkstra算法,否则使用A*算法
+  use_dijkstra: true
+  # 设置为true,将使用二次函数近似函数,否则使用更加简单的计算方式,这样节省硬件计算资源
+  use_quadratic: true
+  # 如果设置为true,则会规划一条沿着网格边界的路径,偏向于直线穿越网格,否则将使用
+  # 梯度下降算法,路径更为光滑点.
+  use_grid_path: false
+  # 若在某些情况下,想让global_planner完全复制navfn的功能,那就设置为true,但是需要注意
+  # navfn是非常旧的ROS系统中使用的,现在已经都用global_planner代替navfn了,所以不建议
+  # 设置为true.
+  old_navfn_behavior: false
+  # 致命代价值,默认是设置为253,可以动态来配置该参数
+  lethal_cost: 253
+  # 中等代价值,默认设置是50,可以动态配置该参数
+  neutral_cost: 50
+  # 代价地图与每个代价值相乘的因子
+  cost_factor: 3.0
+  # 是否发布costmap的势函数
+  publish_potential: true
+  # 如何设置每个点的方向(这个有什么用啊)
+  orientation_mode: 0
+  # 根据orientation_mode指定的位置积分来得到使用窗口的方向.默认值1,可以动态重新配置.
+  orientation_window_size: 1
+  # 画出致命障碍的全局代价地图，对于非静态全局代价地图的使用，需要设置为false
+  outline_map: true

@@ -37,10 +37,10 @@ struct GoalPoint
 	float y2[5];
 	GoalPoint(){
 		x1[0] = -0.5; y1[0] = -0.5; x2[0] = 0.5; y2[0] = 0.5;
-		x1[1] = 1.5; y1[1] = -4.6; x2[1] = 2.5; y2[1] = -2.9;
-		x1[2] = 1.5; y1[2] = -6.0; x2[2] = 2.5; y2[2] = -5.2;
-		x1[3] = -2.6; y1[3] = -6.3; x2[3] = -2.0; y2[3] = -5.2;
-		x1[4] = 0.2; y1[4] = -5.0; x2[4] = 1.5; y2[4] = -3.8;
+		x1[1] = 1.8; y1[1] = -3.6; x2[1] = 2.3; y2[1] = -2.7;
+		x1[2] = 1.8; y1[2] = -5.5; x2[2] = 2.3; y2[2] = -4.8;
+		x1[3] = -2.4; y1[3] = -5.2; x2[3] = -1.9; y2[3] = -4.6;
+		x1[4] = 0.2; y1[4] = -4.4; x2[4] = 1.5; y2[4] = -3.3;
 	}
 };
 
@@ -65,6 +65,7 @@ private:
 	//话题发布订阅
 	ros::Subscriber odom_sub;
 	ros::Subscriber goal_sub;
+	ros::Subscriber location_sub;
 	ros::Publisher location_pub;
 
 	//回调函数（服务）
@@ -74,6 +75,7 @@ private:
 	//回调函数（话题）
 	void odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& odomMsg);
 	void goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg);
+	void locateCB(const std_msgs::Int32& data);
 
 public:
 	Locate();

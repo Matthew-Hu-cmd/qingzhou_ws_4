@@ -1,11 +1,10 @@
 #map_type: voxel
 map_type: costmap
-robot_radius: 0.25 #»úÆ÷ÈËµÄ°ë¾¶£¬µ¥Î»ÊÇÃ×£¬·ÇÔ²ÐÎ»úÆ÷ÈË»¹ÐèÒªÅäºÏfootprint²ÎÊý
-#³¤65cm£¬¿í45cm£¬¸ß25cm
-#footprint: [[0.23,0.19],[0.25,0],[0.23,-0.19],[-0.23, -0.19],[-0.23,0.19]]hpÈýÔº¸øµÄÎå±ßÐÎ³µ
-footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]] #ËÄ±ßÐÎ³µË³ÊÆÕëÄæÊ±Õë×ø±ê¶¼¿ÉÒÔ
+# robot_radius: 0.3 #»úÆ÷ÈËµÄ°ë¾¶£¬µ¥Î»ÊÇÃ×£¬·ÇÔ²ÐÎ»úÆ÷ÈË»¹ÐèÒªÅäºÏfootprint²ÎÊý
+# footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]] #ËÄ±ßÐÎ³µË³ÊÆÕëÄæÊ±Õë×ø±ê¶¼¿ÉÒÔ
+footprint: [[0.325,0.270],[0.325,-0.270],[-0.325,-0.270],[-0.325,0.270]]
 recovery_behavior_enabled: true
-reset_distance: 7.0
+reset_distance: 7.0 #ples of Different Parameterizations
 controller_frequency: 5
 
 obstacle_layer: #ÕÏ°­Îï²ã
@@ -22,9 +21,8 @@ obstacle_layer: #ÕÏ°­Îï²ã
 
   obstacle_range: 2.5
   raytrace_range: 10.0
-  #footprint:[[-0.3,-0.4],[-0.3,1.03],[-0.0,1.03],[0.3, 1.03],[0.3,-0.4]]
-  footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]]
-  inflation_radius: 0.23
+  footprint: [[0.325,0.270],[0.325,-0.270],[-0.325,-0.270],[-0.325,0.270]]
+  inflation_radius: 0.3
   #inf_is_valid:true
   max_obstacle_height: 0.40
   min_obstacle_height: 0.03

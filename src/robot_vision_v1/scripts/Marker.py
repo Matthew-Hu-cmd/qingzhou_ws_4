@@ -2,7 +2,6 @@
 import numpy as np
 import cv2
 import cv2.aruco as aruco
-import time
 
 dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_1000)  # 编码点的类型,与生成的时候对应
 K = np.array([[401.27, 0, 324.47],

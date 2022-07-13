@@ -103,39 +103,39 @@ void DynamicParameters::locateCB(const std_msgs::Int32& data)
 {
 	switch(data.data)
 	{
-		case 0:
+		case Start:
 			setParameters(paramConfig.config1);
 			break;
-		case 1:
-			setParameters(paramConfig.config1);
+		case Load:
+			setParameters(paramConfig.config2);
 			break;
-		case 2:
-			setParameters(paramConfig.config1);
-			break;
-		case 3:
-			setParameters(paramConfig.config1);
-			break;
-		case 4:
-			setParameters(paramConfig.config1);
-			break;
-		case 5:
-			setParameters(paramConfig.config1);
-			break;
-		case 6:
-			setParameters(paramConfig.config1);
-			break;
-		case 7:
-			setParameters(paramConfig.config1);
-			break;
-		case 8:
-			setParameters(paramConfig.config1);
-			break;
-		case 9:
-			setParameters(paramConfig.config1);
-			break;
-		case 10:
-			setParameters(paramConfig.config1);
-			break;
+		case Unload:
+			setParameters(paramConfig.config4);
+
+		// case 3:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 4:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 5:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 6:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 7:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 8:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 9:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
+		// case 10:
+		// 	setParameters(paramConfig.config1);
+		// 	break;
 		default:
 			ROS_INFO("Keep!");
 			break;

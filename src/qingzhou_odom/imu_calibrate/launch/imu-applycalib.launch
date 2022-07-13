@@ -3,7 +3,8 @@
    
     <node pkg="imu_calib" type="apply_calib" name="apply_calib" output="screen" respawn="false">
 <!--         <remap from="imu" to="raw" /> -->
-        <param name="calib_file" value="$(find imu_calib)/../launch/imu_calib.yaml" />
+        <!-- <param name="calib_file" value="$(find imu_calib)/../launch/imu_calib.yaml" /> -->
+       <param name="calib_file" value="$(find imu_calib)/../launch/imu_calib_test.yaml" />
         <param name="calibrate_gyros" value="true" />
         <remap from="corrected" to="imu/data_raw" />
     </node>

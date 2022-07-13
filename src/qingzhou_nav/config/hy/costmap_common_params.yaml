@@ -1,0 +1,15 @@
+#   http://wiki.ros.org/costmap_2d?distro=noetic
+#   http://wiki.ros.org/costmap_2d/hydro/obstacles
+#
+
+# 确定最大范围传感器读数，机器人只会更新其地图包含距离移动基座2.5米以内的障碍物的信息。
+obstacle_range: 2.5
+# 用于清除指定范围外的空间。机器人将尝试清除3米外的空间，在代价地图中清除3米外的障碍物。
+raytrace_range: 3.0
+# 机器人的大小。每个点依次连接在一起。
+footprint: [[0.25,0.20],[0.27,0],[0.25,-0.20],[-0.25, -0.20],[-0.25,0.20]]
+# 在代价地图的与障碍物保持安全的最大距离。
+inflation_radius: 0.55
+
+
+

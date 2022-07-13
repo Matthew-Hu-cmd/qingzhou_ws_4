@@ -9,7 +9,7 @@
     <include file="$(find qingzhou_nav)/launch/amcl.launch" /> 
 
     <!-- for Map server -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find qingzhou_nav)/maps/map_5_14.yaml" output="screen"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find qingzhou_nav)/maps/lyz.yaml" output="screen"/>
 
     <!-- Navigation -->
     <include file="$(find qingzhou_nav)/launch/includes/qingzhou_move_base.launch.xml" />

@@ -27,29 +27,29 @@ struct ParametersConfig
 	qingzhou_nav::L1_dynamicConfig config4;
 	qingzhou_nav::L1_dynamicConfig config5;
 	ParametersConfig(){
-		config1.L = 0.26;
+		config1.L = 0.3;
 		config1.Lrv = 10.0;
 		config1.Vcmd = 0.7;
 		config1.lfw = 0.13;
-		config1.lrv = 10.0;
+		config1.lrv = 10.0;   
 		config1.controller_freq = 20.0;
-		config1.angle_gain = -1.8;
+		config1.angle_gain = -1.6;
 		config1.gas_gain = 1.0;
-		config1.base_speed = 1.0;
+		config1.base_speed = 1.2;
 		config1.base_angle = 0.0;
 
-		config2.L = 0.26;
+		config2.L = 0.3;
 		config2.Lrv = 10.0;
 		config2.Vcmd = 0.7;
 		config2.lfw = 0.13;
 		config2.lrv = 10.0;
 		config2.controller_freq = 20.0;
-		config2.angle_gain = -1.8;
+		config2.angle_gain = -1.6;
 		config2.gas_gain = 1.0;
 		config2.base_speed = 1.0;
 		config2.base_angle = 0.0;	
 
-		config3.L = 0.26;
+		config3.L = 0.3;
 		config3.Lrv = 10.0;
 		config3.Vcmd = 0.7;
 		config3.lfw = 0.13;
@@ -57,21 +57,21 @@ struct ParametersConfig
 		config3.controller_freq = 20.0;
 		config3.angle_gain = -1.8;
 		config3.gas_gain = 1.0;
-		config3.base_speed = 1.0;
+		config3.base_speed = 1.2;
 		config3.base_angle = 0.0;		
 		
-		config4.L = 0.26;
+		config4.L = 0.3;
 		config4.Lrv = 10.0;
 		config4.Vcmd = 0.7;
 		config4.lfw = 0.13;
 		config4.lrv = 10.0;
 		config4.controller_freq = 20.0;
-		config4.angle_gain = -1.8;
-		config4.gas_gain = 1.0;
+		config4.angle_gain = -1.6;
+		config4.gas_gain = 1.2;
 		config4.base_speed = 1.0;
 		config4.base_angle = 0.0;
 				
-		config5.L = 0.26;
+		config5.L = 0.3;
 		config5.Lrv = 10.0;
 		config5.Vcmd = 0.7;
 		config5.lfw = 0.13;
@@ -79,7 +79,7 @@ struct ParametersConfig
 		config5.controller_freq = 20.0;
 		config5.angle_gain = -1.8;
 		config5.gas_gain = 1.0;
-		config5.base_speed = 1.0;
+		config5.base_speed = 1.2;
 		config5.base_angle = 0.0;
 	}
 };

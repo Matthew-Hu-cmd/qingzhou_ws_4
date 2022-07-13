@@ -5,12 +5,12 @@ import time
 
 
 def gstreamer_pipeline(
-        capture_width=3264,
-        capture_height=2464,
-        display_width=640,
-        display_height=480,
-        framerate=21,
-        flip_method=0,
+		capture_width=640,
+		capture_height=480,
+		display_width=640,
+		display_height=480,
+		framerate=25,
+		flip_method=0,
 ):
     return (
             "nvarguscamerasrc ! "
@@ -33,7 +33,7 @@ def empty(a):
     pass
 
 
-path = cv2.VideoCapture(0)#gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
+path = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)#gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
 cv2.namedWindow("TrackBars")  # 创建跟踪栏，帮助查找合适的取值范围
 cv2.resizeWindow("TrackBars", 640, 240)  # 调整跟踪栏窗口大小
 # 创建轨迹栏，定义名称 导入跟踪栏 初始值 最大值 调用emptu函数反复执行
@@ -65,17 +65,17 @@ while True:
     print(h_min, h_max, s_min, s_max, v_min, v_max)  # 打印六个值
 
     img = cv2.resize(img, (320, 240), interpolation=cv2.INTER_AREA)# 将图像压缩
-    img = cv2.GaussianBlur(img, (5, 5), 0)
+    # img = cv2.GaussianBlur(img, (5, 5), 0)
     imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # 将BGR图像转为HSV
     lower = np.array([h_min, s_min, v_min])
     upper = np.array([h_max, s_max, v_max])
     mask = cv2.inRange(imgHSV, lower, upper)  # 创建蒙版 指定颜色上下限 范围内颜色显示 否则过滤
-    kernel_width = 4  # 调试得到的合适的膨胀腐蚀核大小
-    kernel_height = 4  # 调试得到的合适的膨胀腐蚀核大小
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_width, kernel_height))
-    mask = cv2.erode(mask, kernel)
-    mask = cv2.dilate(mask, kernel)
-    mask = cv2.dilate(mask, kernel)
+    # kernel_width = 4  # 调试得到的合适的膨胀腐蚀核大小
+    # kernel_height = 4  # 调试得到的合适的膨胀腐蚀核大小
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_width, kernel_height))
+    # mask = cv2.erode(mask, kernel)
+    # mask = cv2.dilate(mask, kernel)
+    # mask = cv2.dilate(mask, kernel)
     # line_img = mask[120:220,0:220]
     # light_img = mask[:100,:200 ]
     cv2.imshow("raw",img)

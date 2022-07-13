@@ -1,10 +1,10 @@
-
 global_costmap:
     footprint: [[0.325,0.225],[0.325,-0.225],[-0.325,-0.225],[-0.325,0.225]] 
     footprint_padding: 0.01
     transform_tolerance: 1.0
     update_frequency: 5.0
     publish_frequency: 5.0
+    rolling_window: false
 
     global_frame: map
     robot_base_frame: base_link
@@ -12,6 +12,7 @@ global_costmap:
 
     rolling_window: false
     track_unknown_space: true
+
 
     plugins: 
         - {name: static,    type: "costmap_2d::StaticLayer"}            
@@ -26,5 +27,5 @@ global_costmap:
         laser_scan_sensor: {sensor_frame: base_link, data_type: LaserScan, topic: /scan, marking: true, clearing: true}
 
     inflation:
-        inflation_radius: 0.23
-        cost_scaling_factor: 5.0
+        inflation_radius: 0.5   #0.23
+        cost_scaling_factor: 5.0     #5.0

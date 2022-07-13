@@ -115,7 +115,7 @@ void actuator::callback_move_base(const ackermann_msgs::AckermannDrive::ConstPtr
 void actuator::run()
 {
     int run_rate = 50;              
-    ros::Rate rate(run_rate);      
+    ros::Rate rate(run_rate);
 
     double x = 0.0;                 //x坐标                       
     double y = 0.0;                 //y坐标

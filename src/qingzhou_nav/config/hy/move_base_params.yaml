@@ -1,0 +1,44 @@
+# Move base node parameters. For full documentation of the parameters in this file, please see
+#
+#  http://www.ros.org/wiki/move_base
+#
+
+# 指定用于move_base的全局规划器插件名称
+base_global_planner: "navfn/NavfnROS"
+# 指定用于move_base的局部规划器名称
+base_local_planner: "base_local_planner/TrajectoryPlannerROS"
+
+# 全局规划操作的执行频率.如果设置为0.0,则全局规划器仅在接收到新的目标
+# 点或者局部规划器报告路径堵塞时才会重新执行规划操作.
+planner_frequency: 1.0
+# 向底盘控制移动话题cmd_vel发送命令的频率
+controller_frequency: 5.0
+# 在空间清理操作执行前,留给规划器多长时间来找出一条有效规划
+planner_patience: 5.0
+# 在空间清理操作执行前,控制器花多长时间等有效控制下发
+controller_patience: 3.0
+# How many times to allow for planning retries before executing 
+# recovery behaviors. A value of -1.0 corresponds to an infinite retries.
+max_planning_retries: -1
+# The distance away from the robot in meters at which 
+# obstacles will be cleared from the costmap when attempting 
+# to clear space in the map.
+conservative_reset_dist: 3.0
+# Whether or not to enable the move_base recovery behaviors 
+# to attempt to clear out space.
+recovery_behavior_enabled: true
+# Determines whether or not the robot will attempt an in-place rotation
+# when attempting to clear out space.
+clearing_rotation_allowed: true
+# 当move_base在不活动状态时,是否关掉costmap
+shutdown_costmaps: false
+# 执行修复机制前,允许振荡的时长
+oscillation_timeout: 8.0
+# 
+oscillation_distance: 
+
+make_plan_clear_costmap:
+
+make_plan_add_unreachable_goal:
+
+restore_defaults:

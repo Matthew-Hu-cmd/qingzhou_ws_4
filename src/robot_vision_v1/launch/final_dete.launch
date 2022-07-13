@@ -1,4 +1,4 @@
 <launch>
-    <node pkg="robot_vision" name="detector" type="final_dete.py" output="screen">
+    <node pkg="robot_vision" name="vision" type="final_dete.py" output="screen">
     </node>
 </launch>

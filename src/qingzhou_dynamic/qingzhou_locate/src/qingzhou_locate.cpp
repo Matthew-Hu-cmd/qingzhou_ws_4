@@ -35,6 +35,7 @@ Locate::Locate()
 	//Publishers and Subscribers
 	odom_sub = nh.subscribe("/amcl_pose", 1, &Locate::odomCB, this);
 	goal_sub = nh.subscribe("/move_base_simple/goal", 1, &Locate::goalCB, this);
+	location_sub =  nh.subscribe("/qingzhou_locate", 1, &Locate::locateCB, this);
 	location_pub = nh.advertise<std_msgs::Int32>("/qingzhou_locate", 1);
 
 
@@ -83,6 +84,20 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			}
 			break;
 
+		case TrafficLight:
+			if (odom.pose.pose.position.x > goalPoint.x1[TrafficLight] 
+			&& odom.pose.pose.position.x < goalPoint.x2[TrafficLight] 
+			&& odom.pose.pose.position.y > goalPoint.y1[TrafficLight] 
+			&& odom.pose.pose.position.y < goalPoint.y2[TrafficLight])
+			{
+				robotLocation = goalLocation;
+			}	
+			else
+			{
+				robotLocation = RobotLocation(goalLocation + 5);
+			}
+			break;
+
 		//是否在卸货区或路上的其他区域
 		case Unload:
 			if (lastLocation == Load)
@@ -97,10 +112,10 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			{
 				robotLocation = TrafficLight;
 			}
-			else if(lastLocation == TrafficLight)
-			{
-				robotLocation = TrafficLightToUnload;
-			}
+			// else if(lastLocation == TrafficLight)
+			// {
+			// 	robotLocation = TrafficLightToUnload;  //TrafficLightToUnload由视觉给
+			// }
 			else if(lastLocation == TrafficLightToUnload 
 			&& odom.pose.pose.position.x > goalPoint.x1[Unload] 
 			&& odom.pose.pose.position.x < goalPoint.x2[Unload] 
@@ -111,6 +126,22 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			}
 			break;
 		
+		//是否在起始区
+		case RoadLine:
+			if (lastLocation == Unload)
+			{
+				robotLocation = UnloadToRoadLine;
+			}
+			else if(lastLocation == UnloadToRoadLine 
+			&& odom.pose.pose.position.x > goalPoint.x1[RoadLine] 
+			&& odom.pose.pose.position.x < goalPoint.x2[RoadLine] 
+			&& odom.pose.pose.position.y > goalPoint.y1[RoadLine]
+			&& odom.pose.pose.position.y < goalPoint.y2[RoadLine])
+			{
+				robotLocation = RoadLine;
+			}
+			break;
+
 		//是否在起始区
 		case Start:
 			if (lastLocation == Unload)
@@ -139,6 +170,12 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			break;
 	}
 	locationPub();
+}
+
+void Locate::locateCB(const std_msgs::Int32& data)
+{
+	robotLocation = RobotLocation(data.data);
+	lastLocation =  robotLocation;
 }
 
 /******************************************

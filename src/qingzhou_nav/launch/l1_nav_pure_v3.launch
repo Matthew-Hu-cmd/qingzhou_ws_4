@@ -9,13 +9,14 @@
     <include file="$(find qingzhou_nav)/launch/amcl.launch" /> 
 
     <!-- for Map server -->
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find qingzhou_nav)/maps/map_5_14.yaml" output="screen"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find qingzhou_nav)/maps/test_hy.yaml" output="screen"/>
 
     <!-- Navigation -->
     <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
         <!-- costmap layers -->   
         <rosparam file="$(find qingzhou_nav)/config/l1_local_costmap_params.yaml" command="load" />
         <rosparam file="$(find qingzhou_nav)/config/l1_global_costmap_params.yaml" command="load" />
+        
         <!-- move_base params -->
         <rosparam file="$(find qingzhou_nav)/launch/includes/move_base_params.yaml" command="load"/>
     </node>
