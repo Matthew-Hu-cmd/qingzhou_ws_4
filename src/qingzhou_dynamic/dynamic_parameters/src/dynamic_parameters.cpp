@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 	setlocale(LC_ALL,"");
 
 	ros::init(argc, argv, "dynamic_parameters");
-
+	
 	DynamicParameters dynamicParameters;
 	ros::spin();
 
@@ -46,7 +46,10 @@ DynamicParameters::DynamicParameters()
 
 	//先设置初始参数，使其他函数可用
 	setParameters(paramConfig.config1);
+	ros::service::waitForService("/move_base/clear_costmaps");
 
+	map_client = nh.serviceClient<std_msgs::Empty>("/move_base/clear_costmaps");
+	
 	locate_sub = nh.subscribe("/qingzhou_locate", 1, &DynamicParameters::locateCB, this);
 }
 
@@ -105,37 +108,19 @@ void DynamicParameters::locateCB(const std_msgs::Int32& data)
 	{
 		case Start:
 			setParameters(paramConfig.config1);
+			map_client.call(empty);
 			break;
 		case Load:
 			setParameters(paramConfig.config2);
+			map_client.call(empty);
 			break;
 		case Unload:
+			setParameters(paramConfig.config3);
+			map_client.call(empty);
+			break;
+		case RoadLine:
 			setParameters(paramConfig.config4);
-
-		// case 3:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 4:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 5:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 6:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 7:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 8:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 9:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
-		// case 10:
-		// 	setParameters(paramConfig.config1);
-		// 	break;
+			break;
 		default:
 			ROS_INFO("Keep!");
 			break;

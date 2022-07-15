@@ -10,6 +10,7 @@ raytrace_range: 3.0
 footprint: [[0.25,0.20],[0.27,0],[0.25,-0.20],[-0.25, -0.20],[-0.25,0.20]]
 # 在代价地图的与障碍物保持安全的最大距离。
 inflation_radius: 0.55
-
-
-
+# 设置传感器源observation_sources的传感器信息。
+observation_sources: laser_scan_sensor
+# sensor_frame: 雷达坐标系名 data_type: 数据类型 topic: 发布数据的话题 marking: 是否向代价地图添加障碍物信息 clearing: 从代价地图中清除障碍物信息
+laser_scan_sensor: {sensor_frame: laser_frame, data_type: LaserScan, topic: /scan, marking: true, clearing: true}

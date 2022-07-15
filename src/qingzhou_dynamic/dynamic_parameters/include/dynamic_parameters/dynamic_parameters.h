@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 #include <stdio.h>
 #include <boost/function.hpp>
+#include <std_msgs/Empty.h>
 #include <std_msgs/Int32.h>
 #include "qingzhou_locate/RobotLocation.h"
 #include "dynamic_reconfigure/config_tools.h"
@@ -27,20 +28,22 @@ struct ParametersConfig
 	qingzhou_nav::L1_dynamicConfig config4;
 	qingzhou_nav::L1_dynamicConfig config5;
 	ParametersConfig(){
-		config1.L = 0.3;
+		config1.L = 0.23;
 		config1.Lrv = 10.0;
 		config1.Vcmd = 0.7;
+		config1.Lfw = 1.0;
 		config1.lfw = 0.13;
 		config1.lrv = 10.0;   
 		config1.controller_freq = 20.0;
-		config1.angle_gain = -1.6;
+		config1.angle_gain = -1.5;
 		config1.gas_gain = 1.0;
-		config1.base_speed = 1.2;
+		config1.base_speed = 1.4;
 		config1.base_angle = 0.0;
 
 		config2.L = 0.3;
 		config2.Lrv = 10.0;
 		config2.Vcmd = 0.7;
+		config2.Lfw = 1.0;
 		config2.lfw = 0.13;
 		config2.lrv = 10.0;
 		config2.controller_freq = 20.0;
@@ -52,6 +55,7 @@ struct ParametersConfig
 		config3.L = 0.3;
 		config3.Lrv = 10.0;
 		config3.Vcmd = 0.7;
+		config3.Lfw = 1.0;
 		config3.lfw = 0.13;
 		config3.lrv = 10.0;
 		config3.controller_freq = 20.0;
@@ -63,6 +67,7 @@ struct ParametersConfig
 		config4.L = 0.3;
 		config4.Lrv = 10.0;
 		config4.Vcmd = 0.7;
+		config4.Lfw = 1.0;
 		config4.lfw = 0.13;
 		config4.lrv = 10.0;
 		config4.controller_freq = 20.0;
@@ -74,6 +79,7 @@ struct ParametersConfig
 		config5.L = 0.3;
 		config5.Lrv = 10.0;
 		config5.Vcmd = 0.7;
+		config5.Lfw = 1.0;
 		config5.lfw = 0.13;
 		config5.lrv = 10.0;
 		config5.controller_freq = 20.0;
@@ -97,11 +103,12 @@ class DynamicParameters
 private:
 	ros::NodeHandle nh;
 	ros::Subscriber locate_sub;
+	ros::ServiceClient map_client;
 
 	RobotLocation robotLocation;
-	// qingzhou_nav::L1_dynamicConfig config;
 	ParametersConfig paramConfig;
 
+	std_msgs::Empty empty;
 	dynamic_reconfigure::Client<qingzhou_nav::L1_dynamicConfig>* client;
 
 	void locateCB(const std_msgs::Int32& data);

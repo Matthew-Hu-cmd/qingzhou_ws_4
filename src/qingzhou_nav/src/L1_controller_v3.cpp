@@ -393,6 +393,7 @@ bool L1Controller::isForwardWayPt(const geometry_msgs::Point& wayPt, const geome
     double car_theta = getYawFromPose(carPose);
 
     float car_car2wayPt_x = cos(car_theta)*car2wayPt_x + sin(car_theta)*car2wayPt_y;
+    // float car_car2wayPt_x = cos(car_theta)*car2wayPt_x + sin(car_theta)*car2wayPt_y - lrv;
     float car_car2wayPt_y = -sin(car_theta)*car2wayPt_x + cos(car_theta)*car2wayPt_y;
 
     if(car_car2wayPt_x > 0) /*is Forward WayPt*/
@@ -408,14 +409,15 @@ bool L1Controller::isWayPtAwayFromLfwDist(const geometry_msgs::Point& wayPt, con
     double dy = wayPt.y - car_pos.y;
     double dist = sqrt(dx*dx + dy*dy);
 
-    if(dist < 0.6)
-        return false;
-    else if(dist >= 0.6)
-        return true;
-    //  if(dist < Lfw)
+    // if(dist < 0.6)
     //     return false;
-    // else if(dist >= Lfw)
+    // else if(dist >= 0.6)
     //     return true;
+    
+    if(dist < Lfw)
+        return false;
+    else if(dist >= Lfw)
+        return true;
 }
 
 geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Pose& carPose)
@@ -425,6 +427,8 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
     geometry_msgs::Point forwardPt;
     geometry_msgs::Point odom_car2WayPtVec;
     foundForwardPt = false;
+    bool _isForwardWayPt;
+    bool _isWayPtAwayFromLfwDist;
 
     if(!goal_reached){
         for(int i =0; i< map_path.poses.size(); i++)
@@ -436,11 +440,11 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
             {
                 tf_listener.transformPose("odom", ros::Time(0) , map_path_pose, "map" ,odom_path_pose);
                 geometry_msgs::Point odom_path_wayPt = odom_path_pose.pose.position;
-                bool _isForwardWayPt = isForwardWayPt(odom_path_wayPt,carPose);
+                _isForwardWayPt = isForwardWayPt(odom_path_wayPt,carPose);
 
                 if(_isForwardWayPt)
                 {
-                    bool _isWayPtAwayFromLfwDist = isWayPtAwayFromLfwDist(odom_path_wayPt,carPose_pos);
+                    _isWayPtAwayFromLfwDist = isWayPtAwayFromLfwDist(odom_path_wayPt,carPose_pos);
                     if(_isWayPtAwayFromLfwDist)
                     {
                         forwardPt = odom_path_wayPt;
@@ -455,7 +459,16 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
                 ros::Duration(1.0).sleep();
             }
         }
-        
+        if(!(_isWayPtAwayFromLfwDist) && _isForwardWayPt)
+        {
+            // ROS_INFO("Distance too short");
+            forwardPt = odom_goal_pos;
+            foundForwardPt = true;
+        }
+        else if(!(_isForwardWayPt))
+        {
+            ROS_INFO("No forward point");
+        }
     }
     else if(goal_reached)
     {
@@ -520,7 +533,8 @@ double L1Controller::getL1Distance(const double& _Vcmd)
 
 double L1Controller::getSteeringAngle(double eta)
 {
-    double steering_angle = -atan2((L*sin(eta)),(Lfw/2+lfw*cos(eta)))*(180.0/PI);
+    // double steering_angle = -atan2((L*sin(eta)),(Lfw/2+lfw*cos(eta)))*(180.0/PI);
+    double steering_angle = -atan2((L*sin(eta)),(Lfw/2 + lfw*cos(eta)))*(180.0/PI);
     //ROS_INFO("Steering Angle = %.2f", steering_angle);
     return steering_angle;
 }
@@ -567,11 +581,7 @@ void L1Controller::controlLoopCB(const ros::TimerEvent&)
             /*Estimate Gas Input*/
             if(!goal_reached)
             {
-                //double u = getGasInput(carVel.linear.x);
-                //cmd_vel.linear.x = baseSpeed - u;
                 ackermann_cmd.speed = base_speed;
-                // ROS_INFO("\nGas = %.2f\nSteering angle = %.2f",ackermann_cmd.speed,ackermann_cmd.steering_angle);
-                //ROS_DEBUG("\nGas = %.2f\nSteering angle = %.2f",ackermann_cmd.speed,ackermann_cmd.steering_angle);
             }
         }
     }
@@ -585,6 +595,7 @@ void L1Controller::dynamicCB(qingzhou_nav::L1_dynamicConfig &config, uint32_t le
     Vcmd = config.Vcmd;
     lfw = config.lfw;
     lrv = config.lrv;
+    Lfw = config.Lfw;
 
     controller_freq = config.controller_freq;
     angle_gain = config.angle_gain;

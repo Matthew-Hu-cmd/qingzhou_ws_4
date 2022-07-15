@@ -52,6 +52,7 @@ def gstreamer_pipeline(
 			)
 	)
 
+# 全局先进先出队列
 funcQueue = queue.Queue()
 color_dict = {
 	'Blue':[[90, 53, 60], [140, 157, 145]],
@@ -70,7 +71,7 @@ def ROI_Img(img, x, y):
 	h, w = img.shape[:2]
 	
 	poly = np.array([
-		[(0, h - y), (w - x, h - y), (w - x, h), (0, h)]
+		[(0, h - y), (w - x, h - y), (w - x, h - 10), (0, h - 10)]
 	])
 
 	if len(img.shape) > 2:
@@ -82,6 +83,7 @@ def ROI_Img(img, x, y):
 	masked_img = cv2.bitwise_and(img, img, mask = mask)
 	return masked_img
 
+# 处理一下图片，开闭运算
 def handleImg(img, kernel_size, low):
 	gray_Img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	ret, img_thresh = cv2.threshold(gray_Img, low, 255, cv2.THRESH_BINARY)
@@ -90,6 +92,7 @@ def handleImg(img, kernel_size, low):
 	img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, kernel)
 	return img_thresh
 
+# 根据传入的color，从color_dict中获取对应上下限提取对应的颜色
 def getColorArea(img, color):
 	hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 	mask = cv2.inRange(hsv_img, lowerb=np.array(color_dict[color][0]), upperb=np.array(color_dict[color][1])) 
@@ -98,21 +101,22 @@ def getColorArea(img, color):
 
 # 获取角度的函数
 def getShift(img):
-	blue_img = getColorArea(img, 'Blue')
-	img_thresh = handleImg(blue_img, 4, 10)
+	# 得到处理后的蓝色图片
+	b_img = getColorArea(img, 'Blue')
+	img_thresh = handleImg(b_img, 4, 10)
 
 	# 获取车道线中点坐标，通过cv2.moments方法获取图心坐标
 	histogram = np.sum(img_thresh[:, :], axis=0)
 	midpoint = int(histogram.shape[0] / 2)
 	leftx_base = np.argmax(histogram[:midpoint])
-	rightx_base = np.argmax(histogram[midpoint + 60:])
-	# 如果左边有点在图的左半平面搜索，没有就在右边搜索
+	rightx_base = np.argmax(histogram[midpoint + 50:])
+	# 如果左右同时有点的话，基点为靠左的点，+50是为了拿到完整提取的车道线，以便提取图心
 	if leftx_base != 0 and rightx_base != 0:
 		base = leftx_base + 50
 	else:
 		base = rightx_base + midpoint + 50
 
-	final_img = ROI_Img(img_thresh, img_thresh.shape[1] - base, 90)
+	final_img = ROI_Img(img_thresh, img_thresh.shape[1] - base, 100)
 	# out_img = cv2.resize(img_thresh, (320, 240), interpolation=cv2.INTER_AREA)
 	# cv2.imshow('final', out_img)
 	# cv2.waitKey(25)
@@ -126,25 +130,25 @@ def getShift(img):
 		if cx == 0 and cy == 0:
 			shift = 0
 		else:
-			shift = np.degrees(np.arctan(float(320 - cx)/float(cy - 52)))
+			shift = np.degrees(np.arctan(float(160 - cx)/float(cy - 26)))
 		return shift
 
 if __name__ =='__main__':
 	max_x, min_x, min_y, aruco_id = 0, 0, 0, -1
 	control_flag, out_check, old_angle, angle, speed = 0, 0, 0, 0, 0
-	green_count, RandY_count, else_count, color_flag = 0, 0, 0, 0
+	green_count, RandY_count, color_flag = 0, 0, 0
 	dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_1000)
 	parameters =  aruco.DetectorParameters_create()
 
 	Video = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
-	ark_contrl = AckermannDrive()
+	ark_contrl = AckermannDrive()     # 阿克曼消息
 	
 	# ros节点设置
 	rospy.init_node("vision_control")
 
-	# cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=1)
-	cmd_vel_pub = rospy.Publisher('/vision_control', AckermannDrive, queue_size=5)
+	# cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=1)    # 单开脚本的时候用这个
+	cmd_vel_pub = rospy.Publisher('/vision_control', AckermannDrive, queue_size=1)
 	locate_pub = rospy.Publisher("/qingzhou_locate", Int32, queue_size=1)
 
 	func_sub = rospy.Subscriber('/qingzhou_locate', Int32, getFunc)
@@ -155,22 +159,24 @@ if __name__ =='__main__':
 		rospy.loginfo("line detector is started...")
 		while not rospy.is_shutdown():
 			
-			# func队列中有数据才会执行下面的程序，否则阻塞
+			# .get()方法获取到数据才会执行下面的程序，否则阻塞
 			func = funcQueue.get()
 
-			# 清除视频缓存
+			# 清除缓存
 			for i in range(10):
 				ret = Video.grab()
 
 			if func == "line":
 				print("------------------------------Line------------------------------")
+				# 获取初始角度
 				for i in range(5):
 					ret, img = Video.read()
-					pre_Img = ROI_Img(img, 0, 90)
+					img = cv2.resize(img, (320, 240), interpolation=cv2.INTER_AREA)
+					pre_Img = ROI_Img(img, 0, 100)
 					shift = getShift(pre_Img)
 					if shift:
 						old_angle = shift
-				if old_angle < 0:
+				if old_angle < 0:     # 没什么用
 					control_flag = 1
 
 				while Video.isOpened():
@@ -180,6 +186,7 @@ if __name__ =='__main__':
 						print('img is none')
 						break
 					else:
+						# 出弯判断
 						if out_check > 8:
 							ark_contrl.speed = 0
 							ark_contrl.steering_angle = 0
@@ -188,14 +195,15 @@ if __name__ =='__main__':
 							out_check = 0
 							break
 
-						pre_Img = ROI_Img(img, 0, 90)
+						img = cv2.resize(img, (320, 240), interpolation=cv2.INTER_AREA)
+						pre_Img = ROI_Img(img, 0, 100)
 						shift = getShift(pre_Img)
 
-						if shift is not None:
+						if shift:
 							out_check = 0
-							if control_flag == 1 and shift < 0:
+							if control_flag == 1 and shift < 0:    # 没什么用
 								angle = -2
-							elif control_flag == 1 and shift > 0:
+							elif control_flag == 1 and shift > 0:  # 没什么用
 								angle = shift
 								control_flag = 0
 							elif control_flag == 0:
@@ -204,7 +212,7 @@ if __name__ =='__main__':
 						else:
 							out_check += 1
 						
-						ark_contrl.speed = 1.2
+						ark_contrl.speed = 1.3
 						ark_contrl.steering_angle = angle 
 						old_angle = angle
 						print(f"angle:{angle}")
@@ -215,6 +223,7 @@ if __name__ =='__main__':
 
 			elif func == "trafficlight":
 				print("------------------------------Light open------------------------------")
+				# color_flag = 0时在判断中，color_flag = 1时检测到绿灯，color_flag = 3时检测到红灯或黄灯
 				while Video.isOpened():
 					rate.sleep()
 					if color_flag == 1:
@@ -224,24 +233,20 @@ if __name__ =='__main__':
 					elif color_flag == 2:
 						print("Red or yellow, stop.")
 						color_flag, green_count, RandY_count, else_count = 0, 0, 0, 0
-					# elif color_flag == 3:
-						# print("No light, maybe you can go.")
-						# color_flag, green_count, RandY_count, else_count = 0, 0, 0, 0
-						# break
 
 					ret, img = Video.read()
 					if img is not None: 
-						img = cv2.resize(img, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_CUBIC)
+						img = cv2.resize(img, (320, 240), interpolation=cv2.INTER_AREA)
 						gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-						corners, ids, rejectedImgPoints = aruco.detectMarkers(gray_img, dict, parameters=parameters)
+						corners, ids, rejectedImgPoints = aruco.detectMarkers(gray_img, dict, parameters=parameters)   # 没有标定，参数是默认的
 						if ids is not None:
 							aruco_id = ids[0][0]
 
-						if aruco_id == 1:
-							if corners is not None:
+						if aruco_id == 1:   # 只有看到的id为1才执行判断
+							if len(corners) > 0:
 								x = corners[0][0][:,0]
 								y = corners[0][0][:,1]
-								max_x, min_x, min_y = int(max(x)), int(min(x)), int(min(y))
+								max_x, min_x, min_y = int(max(x)), int(min(x)), int(min(y))   # 提取aruco码上面的部分，即红绿灯部分
 
 							poly = np.array([
 								[(min_x, 0), (max_x, 0), (max_x, min_y), (min_x, min_y)]
@@ -260,16 +265,11 @@ if __name__ =='__main__':
 								green_count += 1
 							if RandY_Limg.any():
 								RandY_count += 1
-							if green_Limg.any() is False and RandY_Limg.any() is False:
-								else_count += 1
-								print("No light")
-							
-							if green_count == 10:
+
+							if green_count == 8:
 								color_flag = 1
-							elif RandY_count == 10:
+							elif RandY_count == 8:
 								color_flag = 2
-							elif else_count == 100:
-								color_flag = 3
 				locate_pub.publish(8)
 				print("------------------------------Light close------------------------------")
 	finally:

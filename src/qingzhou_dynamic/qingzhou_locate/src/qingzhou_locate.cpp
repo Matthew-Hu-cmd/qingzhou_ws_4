@@ -85,14 +85,15 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			break;
 
 		case TrafficLight:
-			if (odom.pose.pose.position.x > goalPoint.x1[TrafficLight] 
+			if (lastLocation != TrafficLightToUnload
+			&& odom.pose.pose.position.x > goalPoint.x1[TrafficLight] 
 			&& odom.pose.pose.position.x < goalPoint.x2[TrafficLight] 
 			&& odom.pose.pose.position.y > goalPoint.y1[TrafficLight] 
 			&& odom.pose.pose.position.y < goalPoint.y2[TrafficLight])
 			{
 				robotLocation = goalLocation;
 			}	
-			else
+			else if(lastLocation != TrafficLightToUnload)
 			{
 				robotLocation = RobotLocation(goalLocation + 5);
 			}
@@ -126,7 +127,7 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			}
 			break;
 		
-		//是否在起始区
+		//是否在che
 		case RoadLine:
 			if (lastLocation == Unload)
 			{
