@@ -30,16 +30,16 @@ AckermannCmdFilter::AckermannCmdFilter()
 {
 	//Private parameters handler
 	ros::NodeHandle pn("~");
-
+	pn.param("use_vision", use_vision, true);
     //Controller parameter
 	
-    pn.param("controller_freq", controller_freq, 20);
+    pn.param("controller_freq", controller_freq, 80);
 
 	//Publishers and Subscribers
 	location_sub = nh.subscribe("/qingzhou_locate", 1, &AckermannCmdFilter::locateCB, this);
 	goal_sub = nh.subscribe("/move_base_simple/goal", 1, &AckermannCmdFilter::goalCB, this);
 	ackermannFromOdom_sub = nh.subscribe("/ackermann_cmd", 1, &AckermannCmdFilter::ackermannCmdFromOdomCB, this);
-	ackermannFromVision_sub = nh.subscribe("/vision_control", 10, &AckermannCmdFilter::ackermannCmdFromVisionCB, this);
+	ackermannFromVision_sub = nh.subscribe("/vision_control", 1, &AckermannCmdFilter::ackermannCmdFromVisionCB, this);
 	ackermannCmdFilted_pub = nh.advertise<ackermann_msgs::AckermannDrive>("/ackermann_cmd_filted", 1);
 	// Rubbish
 	// locate_cli = nh.serviceClient<qingzhou_locate::RobotLocation>("qingzhou_locate");
@@ -99,7 +99,12 @@ void AckermannCmdFilter::controlLoopCB(const ros::TimerEvent&)
 	else if (robotLocation == TrafficLight ||
 	 robotLocation == RoadLine)
 	{
-		ackermannCmdFilted = ackermannCmdFromVision;
+		if (robotLocation == RoadLine && ackermannCmdFromVision.speed < 0.1){
+			ackermannCmdFilted = ackermannCmdFromOdom;
+		}
+		else{
+			ackermannCmdFilted = ackermannCmdFromVision;
+		}
 		// ROS_INFO("Vision: speed: %f", ackermannCmdFilted.speed);
 	}
 	//Stop
@@ -122,7 +127,7 @@ Func : 得到目标点后，从qingzhou_locate那获取
 void AckermannCmdFilter::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg)
 {
 	goal = *goalMsg;
-	ROS_INFO("Goal Received");
+	// ROS_INFO("Goal Received");
 	//Whether Traffic Light or Roadline
 	if (false)
 	{

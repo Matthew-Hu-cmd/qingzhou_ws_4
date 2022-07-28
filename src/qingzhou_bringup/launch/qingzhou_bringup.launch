@@ -6,7 +6,7 @@
     <node name="qingzhou_bringup" pkg="qingzhou_bringup" type="qingzhou_bringup" output="screen"  respawn="true"/>
       <param name="mcuserialport" value="/dev/stm32board" type="string"/> 
       <param name="mcubaudrate" value = "115200" type = "int"/> 
-	  <param name="ackermann_cmd" value = "/ackermann_cmd_filted" type = "string" if="$(arg use_vision)"/> <!--使用视觉-->
+	    <param name="ackermann_cmd" value = "/ackermann_cmd_filted" type = "string" if="$(arg use_vision)"/> <!--使用视觉-->
       <param name="calibrate_lineSpeed" value = "0" type = "int"/> 
       <param name="calibrate_angularSpeed" value = "0" type = "int"/> 
       <param name="ticksPerMeter" value = "1200" type = "int"/>      <!-- 1235  -->

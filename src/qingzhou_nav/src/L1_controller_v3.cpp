@@ -198,6 +198,7 @@ Todo:
 #include <ackermann_msgs/AckermannDrive.h>
 #include <visualization_msgs/Marker.h>
 
+
 #define PI 3.14159265358979
 
 /********************/
@@ -231,12 +232,12 @@ class L1Controller
 
         visualization_msgs::Marker points, line_strip, goal_circle;
         ackermann_msgs::AckermannDrive ackermann_cmd;
-        geometry_msgs::Point odom_goal_pos;
+        geometry_msgs::Point odom_goal_pos, nav_goal_pos, map_goal_pose;
         nav_msgs::Odometry odom;
         nav_msgs::Path map_path, odom_path;
 
         double L, Lfw, Lrv, Vcmd, lfw, lrv, steering, u, v;
-        double gas_gain, base_angle, base_speed, angle_gain, goal_radius;
+        double gas_gain, base_angle, base_speed, angle_gain, goal_radius, goal_dist;
         int controller_freq;
         bool foundForwardPt, goal_received, goal_reached;
 
@@ -346,7 +347,10 @@ void L1Controller::odomCB(const nav_msgs::Odometry::ConstPtr& odomMsg)
 
 void L1Controller::pathCB(const nav_msgs::Path::ConstPtr& pathMsg)
 {
-    map_path = *pathMsg;
+    if (pathMsg->poses.size() > 1){
+        map_path = *pathMsg;
+        // ROS_INFO_STREAM("path size is " << pathMsg->poses.size());
+    }
 }
 
 
@@ -354,11 +358,20 @@ void L1Controller::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg)
 {
     try
     {
+        // if (abs(map_goal_pose.y - goalMsg->pose.position.y) > 0.01)
+        // map_goal_pose = goalMsg->pose.position;
+        goal_received = true;
+        goal_reached = false;
         geometry_msgs::PoseStamped odom_goal;
         tf_listener.transformPose("odom", ros::Time(0) , *goalMsg, "map" ,odom_goal);
         odom_goal_pos = odom_goal.pose.position;
-        goal_received = true;
-        goal_reached = false;
+        
+        double yaw = getYawFromPose(odom_goal.pose);
+        nav_goal_pos.x = odom_goal_pos.x + Lfw * cos(yaw);
+        nav_goal_pos.y = odom_goal_pos.y + Lfw * sin(yaw);
+        nav_goal_pos.z = 0.0;
+
+        // ROS_INFO("x: %f, y: %f", nav_goal_pos.x, nav_goal_pos.y);
 
         /*Draw Goal on RVIZ*/
         goal_circle.pose = odom_goal.pose;
@@ -424,13 +437,15 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
 {
     geometry_msgs::Point carPose_pos = carPose.position;
     double carPose_yaw = getYawFromPose(carPose);
+    double distance, distance_x, distance_y;
     geometry_msgs::Point forwardPt;
+    geometry_msgs::Point judgePt;
     geometry_msgs::Point odom_car2WayPtVec;
     foundForwardPt = false;
     bool _isForwardWayPt;
     bool _isWayPtAwayFromLfwDist;
 
-    if(!goal_reached){
+    if(!goal_reached && (goal_dist < 0.35)){
         for(int i =0; i< map_path.poses.size(); i++)
         {
             geometry_msgs::PoseStamped map_path_pose = map_path.poses[i];
@@ -452,6 +467,7 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
                         break;
                     }
                 }
+		        judgePt = odom_path_wayPt;
             }
             catch(tf::TransformException &ex)
             {
@@ -459,10 +475,13 @@ geometry_msgs::Point L1Controller::get_odom_car2WayPtVec(const geometry_msgs::Po
                 ros::Duration(1.0).sleep();
             }
         }
-        if(!(_isWayPtAwayFromLfwDist) && _isForwardWayPt)
+        distance_x = carPose_pos.x - odom_goal_pos.x;
+        distance_y = carPose_pos.y - odom_goal_pos.y;
+        distance = sqrt(distance_x * distance_x + distance_y * distance_y);
+
+        if(distance < Lfw && _isForwardWayPt)
         {
-            // ROS_INFO("Distance too short");
-            forwardPt = odom_goal_pos;
+            forwardPt = nav_goal_pos;
             foundForwardPt = true;
         }
         else if(!(_isForwardWayPt))
@@ -534,8 +553,9 @@ double L1Controller::getL1Distance(const double& _Vcmd)
 double L1Controller::getSteeringAngle(double eta)
 {
     // double steering_angle = -atan2((L*sin(eta)),(Lfw/2+lfw*cos(eta)))*(180.0/PI);
-    double steering_angle = -atan2((L*sin(eta)),(Lfw/2 + lfw*cos(eta)))*(180.0/PI);
-    //ROS_INFO("Steering Angle = %.2f", steering_angle);
+    // ROS_INFO("ETA = %.2f", -eta*180.0/PI);
+    double steering_angle = -atan2((L*sin(eta)),(Lrv/2 + lfw*cos(eta)))*(180.0/PI);
+    // ROS_INFO("Steering Angle = %.2f", steering_angle);
     return steering_angle;
 }
 
@@ -553,11 +573,11 @@ void L1Controller::goalReachingCB(const ros::TimerEvent&)
     if(goal_received)
     {
         double car2goal_dist = getCar2GoalDist();
-        if(car2goal_dist < 0.2)
+        if(car2goal_dist < goal_dist)
         {
             goal_reached = true;
             goal_received = false;
-            ROS_INFO("Goal Reached !");
+            ROS_INFO("-------------Goal Reached !---------------");
         }
     }
 }
@@ -585,7 +605,10 @@ void L1Controller::controlLoopCB(const ros::TimerEvent&)
             }
         }
     }
-    pub_.publish(ackermann_cmd);
+	if (goal_received || goal_reached)
+	{
+		pub_.publish(ackermann_cmd);
+	}
 }
 
 void L1Controller::dynamicCB(qingzhou_nav::L1_dynamicConfig &config, uint32_t level)
@@ -602,6 +625,8 @@ void L1Controller::dynamicCB(qingzhou_nav::L1_dynamicConfig &config, uint32_t le
     gas_gain = config.gas_gain;
     base_speed = config.base_speed;
     base_angle = config.base_angle;
+
+    goal_dist = config.goal_dist;
     ROS_INFO("-----params have been changed----");
     ROS_INFO("base_speed:%f",base_speed);
 

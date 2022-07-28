@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
-  <node name="ackermann_cmd_filter" pkg="ackermann_cmd_filter" type="ackermann_cmd_filter" output="screen"/>
+  <arg name="use_vision" default="true" />
+  <node name="ackermann_cmd_filter" pkg="ackermann_cmd_filter" type="ackermann_cmd_filter" output="screen">
+    <param name="use_vision" value="$(arg use_vision)" />
+  </node>
 </launch>

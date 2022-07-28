@@ -85,6 +85,11 @@ void actuator::callback_move_base(const ackermann_msgs::AckermannDrive::ConstPtr
 
    moveBaseControl.TargetSpeed =  msg->speed*32/0.41;
    moveBaseControl.TargetSpeed =  moveBaseControl.TargetSpeed - line;                                 //计算目标线速度
+
+   if (moveBaseControl.TargetSpeed >= 0){
+	    moveBaseControl.TargetShiftPosition = 1;
+   }else{moveBaseControl.TargetShiftPosition = 2;}
+
    moveBaseControl.TargetAngle =  msg->steering_angle;                 //计算目标角度
    moveBaseControl.TargetAngle+=60;                                          //stm32 program has subtract 60
    if (reach == false){
@@ -238,6 +243,7 @@ void actuator::sendCarInfoKernel()
         sum += buf[i];
     buf[9] = (unsigned char)(sum);                      
     size_t writesize = ser.write(buf,10);
+	// ROS_INFO("TargetShiftPosition: %d, moveBaseControl.TargetSpeed: %d", moveBaseControl.TargetShiftPosition, (int)moveBaseControl.TargetSpeed);
 }
 
 //接收下位机发送来的数据

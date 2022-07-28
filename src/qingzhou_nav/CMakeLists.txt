@@ -219,9 +219,11 @@ include_directories(
 
 add_executable(L1_controller_v3 src/L1_controller_v3.cpp)
 target_link_libraries(L1_controller_v3 ${catkin_LIBRARIES})
-add_dependencies(L1_controller_v3 tianracer_generate_messages_cpp)
-
+add_dependencies(L1_controller_v3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(L1_controller_v2 src/L1_controller_v2.cpp)
 target_link_libraries(L1_controller_v2 ${catkin_LIBRARIES})
-add_dependencies(L1_controller_v2 tianracer_generate_messages_cpp)
+#add_dependencies(L1_controller_v2 tianracer_generate_messages_cpp)
+
+add_executable(L1_controller_v4 src/L1_controller_v4.cpp)
+target_link_libraries(L1_controller_v4 ${catkin_LIBRARIES})

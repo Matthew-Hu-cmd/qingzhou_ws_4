@@ -27,8 +27,8 @@ Locate::Locate()
 {
 	ros::NodeHandle pn("~");
 	
-	pn.setParam("DeBug", false);
-
+	pn.param("use_vision", use_vision, false);
+	
 	goalLocation = Unknown;
 	robotLocation = Unknown;
 	lastLocation = Unknown;
@@ -77,7 +77,7 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			&& odom.pose.pose.position.y < goalPoint.y2[Load])
 			{
 				robotLocation = goalLocation;
-			}	
+			}
 			else
 			{
 				robotLocation = RobotLocation(goalLocation + 5);
@@ -113,10 +113,10 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			{
 				robotLocation = TrafficLight;
 			}
-			// else if(lastLocation == TrafficLight)
-			// {
-			// 	robotLocation = TrafficLightToUnload;  //TrafficLightToUnload由视觉给
-			// }
+			else if(lastLocation == TrafficLight && use_vision == false)
+			{
+				robotLocation = TrafficLightToUnload;  //TrafficLightToUnload由视觉给
+			}
 			else if(lastLocation == TrafficLightToUnload 
 			&& odom.pose.pose.position.x > goalPoint.x1[Unload] 
 			&& odom.pose.pose.position.x < goalPoint.x2[Unload] 
@@ -157,8 +157,13 @@ void Locate::odomCB(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& od
 			{
 				robotLocation = RoadLine;
 			}
-			else if(lastLocation == RoadLine
-			&& odom.pose.pose.position.x > goalPoint.x1[Start] 
+			else if(lastLocation == RoadLine 
+			&& odom.pose.pose.position.y > -1.06)
+			{
+				robotLocation = RoadLineToStart;
+			}
+			else if(
+			 odom.pose.pose.position.x > goalPoint.x1[Start] 
 			&& odom.pose.pose.position.x < goalPoint.x2[Start] 
 			&& odom.pose.pose.position.y > goalPoint.y1[Start]
 			&& odom.pose.pose.position.y < goalPoint.y2[Start])
@@ -204,7 +209,7 @@ Func : move_base/goal订阅者的回调函数，可以获取
 void Locate::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goalMsg)
 {
 	goal = *goalMsg;
-	ROS_INFO("Goal Received!");
+	// ROS_INFO("Goal Received!");
 	for (int i = 0; i < 5; ++i)
 	{
 		//通过判断机器人目标点坐标是否在目标点范围内，若不在目标点范围内，就是未知

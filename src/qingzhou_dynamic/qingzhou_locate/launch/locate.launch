@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
+  <arg name="use_vision" default="true" />
   <node name="qingzhou_locate" pkg="qingzhou_locate" type="qingzhou_locate" output="screen">
-	  <param name="DeBug" value="false"/>
+	  <param name="use_vision" value="$(arg use_vision)" />
   </node>
 </launch>

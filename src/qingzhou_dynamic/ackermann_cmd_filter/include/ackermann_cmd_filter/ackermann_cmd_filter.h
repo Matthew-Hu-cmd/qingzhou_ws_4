@@ -49,6 +49,7 @@ private:
 	RobotLocation robotLocation;
 
 	int controller_freq;
+	bool use_vision;
 
 	//Call Back
 	void locateCB(const std_msgs::Int32& data);

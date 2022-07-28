@@ -1,276 +1,230 @@
-#!/usr/lib/python3.6
+#!/usr/bin/envs python3.6
 # -*- coding: utf-8 -*-
 
+from tkinter import RIGHT
 import cv2
+from matplotlib.pyplot import contour, hist
+import matplotlib.pyplot as plt
 import rospy
+import numpy as np
 import time
+import sys
+import signal
 from ackermann_msgs.msg import AckermannDrive  # 引用阿克曼的消息类型
-from handleImg import *
+from ackermann_msgs.msg import AckermannDrive
+from std_msgs.msg import Int32
+
+def quit():
+    sys.exit()
+
+signal.signal(signal.SIGINT,quit)
+signal.signal(signal.SIGTERM,quit)
 
 def gstreamer_pipeline(
-		# capture_width=3264, #原来的
-		# capture_height=2464,
-		capture_width=640,
-		capture_height=480,
-		display_width=640,
-		display_height=480,
-		# display_width=1920, #原来的
-		# display_height=1080,
-		framerate=25,
-		flip_method=0,
+        capture_width=640,
+        capture_height=480,
+        display_width=640,
+        display_height=480,
+        framerate=40,
+        flip_method=0,
 ):
-	return (
-			"nvarguscamerasrc ! "
-			"video/x-raw(memory:NVMM), "
-			"width=(int)%d, height=(int)%d, "
-			"format=(string)NV12, framerate=(fraction)%d/1 ! "
-			"nvvidconv flip-method=%d ! "
-			"video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
-			"videoconvert ! "
-			"video/x-raw, format=(string)BGR ! appsink"
-			% (
-				capture_width,
-				capture_height,
-				framerate,
-				flip_method,
-				display_width,
-				display_height,
-			)
-	)
-np.set_printoptions(suppress=True, precision=4)
+    return (
+            "nvarguscamerasrc ! "
+            "video/x-raw(memory:NVMM), "
+            "width=(int)%d, height=(int)%d, "
+            "format=(string)NV12, framerate=(fraction)%d/1 ! "
+            "nvvidconv flip-method=%d ! "
+            "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+            "videoconvert ! "
+            "video/x-raw, format=(string)BGR ! appsink"
+            % (
+                capture_width,
+                capture_height,
+                framerate,
+                flip_method,
+                display_width,
+                display_height,
+            )
+    )
 
-# #################################偏移检测#################################
-def pianyi_detect(img):
-    pianyi_befor = 0
-    FOV_w=105
-    pianyi = 0
-    pianyi_text = ''
+# np.set_printoptions(suppress=True, precision=4)
+color_dict = {
+    'Blue':[[75, 50, 20], [135, 200, 120]],
+    'Green':[[46, 50, 160], [92, 255, 255]],
+    'RandY':[[0, 30, 50], [35, 255, 255]]
+}
 
-    ##############处理图像##############
-    img_w = img.shape[1] #图片的宽
-    cropped_img = region_of_interest(img)  #对图像进行ROI的分割
-    # cv2.imshow("ROI",cropped_img) 
-    # cv2.waitKey(5)
+# 提取ROI部分，根据传入的x， y参数确定提取的范围
+def ROI_Img(img, x1, x2, y1, y2):
+    poly = np.array([
+        [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
+    ])
 
-    blue_img = color_blue_seperate(cropped_img) #将ROI图像中的蓝色部分提取出来
-    gray_img = cv2.cvtColor(blue_img, cv2.COLOR_BGR2GRAY) #将提取的ROI的蓝色部分转化为灰度图
-    # cv2.imshow("gray",gray_img) #查看转化后的灰度图
-    # cv2.waitKey(5)
-
-    ret, img_thresh = cv2.threshold(gray_img, 10, 255, cv2.THRESH_BINARY)  #大于10的地方就转化为白色255，返回两个值第一个是域值，第二个是二值图图像
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4)) #返回一个4*4的椭圆形矩阵核，椭圆的地方是1，其他地方是0
-    img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_OPEN, kernel) #开运算，运用核kernel先进行腐蚀，再进行膨胀
-    img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, kernel) #闭运算，运用核kernel先进行膨胀，再进行腐蚀
-    # cv2.imshow("img_thresh",img_thresh) #开闭运算后的图像
-    # cv2.waitKey(5)
-
-    contours, hierarchy = cv2.findContours(img_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # print(len(contours))#findcontours返回两个值，一个是一组轮廓信息，还有一个是每条轮廓对应的属性
-    # cv2.drawContours(img_thresh,contours,-1,(0,0,255),3) #将检测到的轮廓画上去 
-    # cv2.imshow("img_thresh_2",img_thresh) #绘制轮廓后的图像
-    # # cv2.waitKey(5)
-
-    ####1.如果检测到蓝色线或者蓝白线，进行判断###########
-    nothing_point = 0 #无用的点
-    if (len(contours) > 0):   # 如果检测到的轮廓数量大于0
-        con_num = len(contours) #将轮廓的个数赋值给con_num
-        contour1 = [] #将contour1 赋值为空列表，[]表示列表，列表是可变的序列
-        for c1 in range(len(contours)): #遍历每一个轮廓
-                for c2 in range(len(contours[c1])): #遍历每一个轮廓的轮廓上的点
-                    contour1.append(contours[c1][c2]) #将每一个轮廓的每一个点都排列起来组成一个新列表，.append() 方法用于在列表末尾添加新的对象
-        contour1 = np.array(contour1) #将组成的新列表转化为矩阵，方便下一步处理
-        (x, y, w, h) = cv2.boundingRect(contour1) #用一个最小的矩形，把找到的所有的轮廓包起来，返回轮值x，y是矩阵左上点的坐标，w，h是矩阵的宽和高
-
-        # ####################1.1 同时检测到蓝白线和蓝线，删选出蓝白线，计算位置########################
-        if w>img_w/3  and con_num > 1 : #如果整体轮廓的宽度大于三分之图片的宽度，则说明同时检测到了蓝白线和蓝线 #原来是除以3
-            mask=np.zeros_like(gray_img) 
-            # cv2.rectangle(mask, (x, y), (x + 180, y + h-3), (255, 255, 255), cv2.FILLED) #将mask的部分进行白色填充，参数为填充区域的左上角顶将gray_img转化为全是0的矩阵并赋值给mask即全黑点和右下角顶点
-            # cv2.imshow('mask',mask) #进行填充后的mask的图像
-            # cv2.waitKey(5)   
-            temp_img=cv2.bitwise_and(img_thresh, img_thresh, mask=mask) #将优化后的二值图img_thresh中的mask区域提取出来给temp_img
-            # cv2.imshow('temp_img',temp_img) #只剩下蓝白线的二值图图像
-            # cv2.waitKey(5)   
-            contours1, hierarchy = cv2.findContours(temp_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) #对只剩下蓝白线的二值图图像进行轮廓检测
-
-            if (len(contours1) > 0):
-                contour2 = []
-                for c1 in range(len(contours1)):
-                    for c2 in range(len(contours1[c1])):
-                        contour2.append(contours1[c1][c2])
-                contour2 = np.array(contour2) #将蓝白线的轮廓信息存于contour2矩阵中
-                (x1, y1, w1, h1) = cv2.boundingRect(contour2) #蓝白线的轮廓信息
-
-                if con_num > 2 : #右边的蓝线有时会看不清，断成两节
-                    # cv2.rectangle(img, (x1, y1), (x1 + w1, img_w), (255, 255, 255), 3)#白框-----同时检测到蓝线和蓝白线给蓝白线画白框——永远贴着底画矩形框
-                    pianyi=((x1+w1/2)-(img_w/2))*FOV_w/img_w #pianyi值为矩形方框的中线距离视野中央的实际距离
-                    if pianyi>0:
-                        pianyi_text='right'
-                    elif pianyi<0:
-                        pianyi_text='left'
-                    else:
-                        pianyi_text = 'stright'
-                else : 
-                    #这个时候才是真正的蓝线
-                    # cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 3) #蓝框-----------------只检测到蓝线并用蓝框画出
-                    pianyi = 80-((x + w / 2) - (img_w / 2)) * FOV_w / img_w #80凑数,为了让车不开出赛道去
-                    pianyi_text='left'
-
-        # #########################1.2 只检测到一条线，需要判断是蓝白线还是蓝线##############
-        elif w<img_w/3  :
-            # 如果是蓝白线
-            if con_num>1: #轮廓数量大于1，就是有好几段蓝色
-                # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 255), 3) #黄框----------只检测到蓝白线并用黄框画出
-                pianyi = ((x + w / 2) - (img_w / 2)) * FOV_w / img_w #pianyi值为矩形方框的中线距离视野中央的实际距离
-                if pianyi > 0:
-                    pianyi_text='right'
-                elif pianyi<0:
-                    pianyi_text='left'
-                else:
-                    pianyi_text = 'stright'
-            # 蓝线
-            else: 
-                ########竖直蓝线######
-                if h < 50 :
-                    # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 255), 3) #黄框----------------检测到了最后一小段的蓝白线的蓝色
-                    pianyi = ((x + w / 2) - (img_w / 2)) * FOV_w / img_w
-                    if pianyi > 0:
-                        pianyi_text='right'
-                    elif pianyi<0:
-                        pianyi_text='left'
-                    else:
-                        pianyi_text = 'stright'
-                else :
-                    # cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 3) #蓝框-----------------只检测到蓝线并用蓝框画出
-                    pianyi = 80-((x + w / 2) - (img_w / 2)) * FOV_w / img_w #80凑数,为了让车不开出赛道去
-                    pianyi_text='left'
-        elif con_num == 1: 
-                #横向蓝线和最后一小段蓝白线的蓝线
-                if h < 50 :
-                    # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 255), 3) #黄框----------------检测到了最后一小段的蓝白线的蓝色
-                    pianyi = ((x + w / 2) - (img_w / 2)) * FOV_w / img_w
-                    if pianyi > 0:
-                        pianyi_text='right'
-                    elif pianyi<0:
-                        pianyi_text='left'
-                    else:
-                        pianyi_text = 'stright'
-                else: 
-                    #看见一块蓝色并且真的是蓝线
-                    # cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 3) #蓝框-----------------只检测到蓝线并用蓝框画出
-                    pianyi = 83-((x + w / 2) - (img_w / 2)) * FOV_w / img_w #平滑过渡
-                    pianyi_text='left'
-        else : 
-            #检测到了左下角的点了
-            nothing_point = 1
-
-
-    # 2.未检测到蓝线或者蓝白线，就检测红线
+    if len(img.shape) > 2:
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        mask = np.zeros_like(gray_img)
     else:
-        cropped_img = color_red_seperate(cropped_img)
-        gray_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-        # gray_img = cv2.GaussianBlur(gray_img, (5, 5), 0, 0, cv2.BORDER_DEFAULT)
-        ret, img_thresh = cv2.threshold(gray_img, 10, 255, cv2.THRESH_BINARY)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-        img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_OPEN, kernel)
-        img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, kernel)
-        contours, hierarchy = cv2.findContours(img_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if (len(contours) > 0):
-            contour2 = []
-            for c1 in range(len(contours)):
-                for c2 in range(len(contours[c1])):
-                    contour2.append(contours[c1][c2])
-            contour2 = np.array(contour2)
-            # res = cv2.drawContours(img, contour1, -1, (0, 0, 255), 1)
-            (x2, y2, w2, h2) = cv2.boundingRect(contour2)
-            # cv2.rectangle(img, (x2, y2), (x2 + w2, img_w), (255, 0, 255), 3) #红框
-            if h2 < 50 :
-                pianyi = pianyi_befor
-            else :
-                pianyi = 50 - ((x2 + w2 / 2) - (img_w / 2)) * FOV_w / img_w
-                pianyi_text='right'
+        mask = np.zeros_like(img)
+    cv2.fillPoly(mask, poly, 255)
+    masked_img = cv2.bitwise_and(img, img, mask = mask)
+    return masked_img
 
-    # cv2.imshow('final_img', img) #车道线全图
-    # cv2.waitKey(50)
-    # print("pianyi_text")
-    
-    # 返回偏移量（cm）和偏移方向（左偏或者右偏）
-    pianyi_now = abs(pianyi)
+# 处理一下图片，开闭运算
+def handleImg(img, kernel_size, low):
+    gray_Img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
+    ret, img_thresh = cv2.threshold(gray_Img, low, 255, cv2.THRESH_BINARY)
+    # cv2.imshow('ac',img_thresh)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_OPEN, kernel)
+    img_thresh = cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, kernel)
+    # img_thresh = cv2.dilate(img_thresh, kernel)
+    return img_thresh
 
-    if pianyi_text == 'right' :
-        pianyi_now = 0 - pianyi_now-14    #这个数要试 #12  
-    elif  pianyi_text == 'left' :
-        pianyi_now =  pianyi_now+8        #这个数要试 #6  
+# 根据传入的color，从color_dict中获取对应上下限提取对应的颜色
+def getColorArea(img, color):
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv_img, lowerb=np.array(color_dict[color][0]), upperb=np.array(color_dict[color][1])) 
+    color_img = cv2.bitwise_and(img, img, mask = mask)
 
-    # print(nothing_point) #打印出有没有左下角点的干扰
-    # if(abs(pianyi - pianyi_befor) > 30) or pianyi_befor == -pianyi_now  or nothing_point ==1: #去除剧烈跳变和检测到左下角点
+    return color_img
 
-    if pianyi_befor == -pianyi_now  or nothing_point ==1: #这一句如果加上防止突变有点危险
-        pianyi_now = pianyi_befor       
-        # print("*****检测到干扰*******")    
-    pianyi_befor = pianyi_now
-    # print(pianyi_text)
-    # print(pianyi_now) #暂时
-    return pianyi_now
-# #############################################################################
+# 获取角度的函数
+def getShift(img):
+    h,w = img.shape[:2]
+    offset, shift = 0, 0
+    # 得到处理后的蓝色图片
+    b_img = getColorArea(img, 'Blue')
+    # cv2.imshow("b", b_img)
+    img_thresh = handleImg(b_img, 4, 10)
 
-if __name__ == '__main__':
-    # 初始化设置
-    cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)    #gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER
-    openColorDetector = 0
-    controlFlag = 0
-    pianyisamelist = [0,0,0,0,0,0,0]
-    pianyi_before = 0
+    # 获取车道线中点坐标，通过cv2.moments方法获取图心坐标
+    histogram = np.sum(img_thresh[:, :], axis=0)
+    # plt.plot(histogram)
+    # plt.show()
+    midpoint = int(histogram.shape[0] / 2)
+    leftx_base = np.argmax(histogram[:midpoint])
+    rightx_base = np.argmax(histogram[midpoint + 80:])
 
-    # 节点设置
-    ark_contrl = AckermannDrive()  # 实例化阿克曼消息
-    rospy.init_node("ackermann_cmd")
+    # 如果左右同时有点的话，基点为靠左的点，+50是为了拿到完整提取的车道线，以便提取图心
+    if leftx_base != 0 and rightx_base != 0:
+        final_img = ROI_Img(img_thresh, 0, leftx_base + 50, h - 70, h)
+        # cv2.imshow('final', final_img)
+    else:
+        final_img = ROI_Img(img_thresh, 0, w, h - 70, h)
+        # judge_base = np.argmax(histogram[int(midpoint/3):])
+        # if judge_base != 0:
+        #     print("Error point.")
+        #     final_img = ROI_Img(color, 0, judge_base + 20, h - 50, h)
+        #     # cv2.imshow('final', final_img)
+        #     # offset = 70 - con * 6
+        # else:
+        #     print("Only blue.")
+        #     final_img = ROI_Img(color, 0, rightx_base + midpoint + 40, h - 50, h)
 
-    while cam.isOpened():
-        ret, img = cam.read()
-
-        if ret:
-            # cv2.imshow('a',img)
-            pass
+    # out_img = cv2.resize(img_thresh, (320, 240), interpolation=cv2.INTER_AREA)
+    # final_img = cv2.bitwise_xor(final_img, dst)
+    # final_ing = cv2.bitwise_or(xor_img, final_img)
+    contours, hierarchy = cv2.findContours(final_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.drawContours(img, contours, 0, (0, 0, 255), 3)
+    # cv2.imshow('final', final_img)
+    # cv2.imshow("img", img)
+    # cv2.imshow("img", img)
+    cv2.waitKey(25)
+    # contours, hierarchy = cv2.findContours(final_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) > 0:
+        (x, y, w, h) = cv2.boundingRect(contours[0])
+        print(w,h,x)
+        if w > 70 or h > 36:
+            print("Blue")
+        # print(contours)
+    #     # 获取图心，即提取部分的图像的车道线中点坐标
+        M = cv2.moments(contours[0])
+        cx = int(M['m10']/(M['m00']+float("1e-5")))
+        cy = int(M['m01']/(M['m00']+float("1e-5")))
+        cv2.circle(img,(cx,cy),2,(0,0,255),2)
+        cv2.imshow('img',img)
+        # 防止中间有时候处理有问题导致找不到中点，同时在出弯时可以用来判断
+        if cx == 0 and cy == 0:
+            shift = 0
         else:
-            print('img is none')
-            break
+            shift = np.degrees(np.arctan(float(160 - cx + offset)/float(cy - 26)))
+    return shift
 
-        img = cv2.resize(img,(640,480))
-        # starttime = time.time()
-        img = img[3: 475,3:635]  #切割掉左右下角干扰点
-        img_line = cv2.resize(img,(640,480))
+if __name__ =='__main__':
+    # ros节点设置
+    rospy.init_node("vision_control")
 
-        pianyi = pianyi_detect(img_line)
-        angle = (pianyi*1.6 + 3.489) /180.0*3.1415926 #新增加了data.y的系数和最后的常数项 k =0.80837   1.6
-        ark_contrl.steering_angle = angle
-        ark_contrl.speed = 0.1  #0.55
-        cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
-        cmd_vel_pub.publish(ark_contrl)
+    # cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=1)    # 单开脚本的时候用这个
+    cmd_vel_pub = rospy.Publisher('/vision_control', AckermannDrive, queue_size=1)
+    locate_pub = rospy.Publisher("/qingzhou_locate", Int32, queue_size=1)
 
-        pianyi_before = pianyi
+    max_x, min_x, min_y, aruco_id = 0, 0, 0, -1
+    out_check, angle, now_angle = 0, 0, 0
+    Kp, Kd = 1.0, 0.2
+    now_err, last_err = 0, 0
+    D_error=[0, 0, 0]
+    green_count, RandY_count, color_flag = 0, 0, 0
 
-        for index,value in enumerate(pianyisamelist):
-            if(not(index == len(pianyisamelist)-1)):
-                #每个元素往前移动
-                pianyisamelist[index] = pianyisamelist[index+1]
-            else:
-                #列表最后一个进来
-                pianyisamelist[index] = pianyi
+    Video = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
 
-        # if(len(set(pianyisamelist)) == 1):
-        #     #4.5s前不考虑车会退出赛道 大概需要5s多  可以加一个判断如果超出赛道一定时间就判断退出
-        #     if((time.time()-starttime) > 2.0):
-        #         ark_contrl.steering_angle = 0.0
-        #         ark_contrl.speed = 0.0
-        #         cmd_vel_pub = rospy.Publisher('/ackermann_cmd', AckermannDrive, queue_size=10)
-        #         cmd_vel_pub.publish(ark_contrl)
-        #         print("done")
-        #         break
+    ark_contrl = AckermannDrive()     # 阿克曼消息
 
-        print(pianyisamelist) 
+    rate = rospy.Rate(100)
 
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-    
-    print ("nav on & line off")
+    try:
+        rospy.loginfo("line detector is started...")
+        while not rospy.is_shutdown():
+            # 清除缓存
+            for i in range(10):
+                ret = Video.grab()
 
-    cam.release()
+            if aruco_id == -1:
+                print("------------------------------Line------------------------------")
+                while Video.isOpened():
+                    rate.sleep()
+                    ret,img = Video.read()
+                    if ret is False:
+                        print('img is none')
+                        break
+                    else:
+                        # 出弯判断
+                        if out_check > 8:
+                            ark_contrl.speed = 0
+                            ark_contrl.steering_angle = 0
+                            cmd_vel_pub.publish(ark_contrl)
+                            print('out, stop')
+                            out_check, angle, now_angle, now_err, last_err = 0, 0, 0, 0, 0
+                            D_error = [0, 0, 0]
+
+                        img = cv2.resize(img, (320, 240), interpolation=cv2.INTER_AREA)
+                        # img = cv2.GaussianBlur(img, (5, 5), 0)
+                        pre_Img = ROI_Img(img, 20, img.shape[1] - 20, img.shape[0] - 75, img.shape[0])
+                        # cv2.imshow("pre", pre_Img)
+                        shift = getShift(pre_Img)
+
+                        if shift:     # PID控制角度
+                            out_check = 0
+                            last_err = now_err
+                            
+                            now_err = 0 - shift
+                            D_error = D_error[1:]
+                            D_error.append(now_err - last_err)
+                            now_angle = Kp * now_err + Kd * (D_error[2] * 0.6 + D_error[1] * 0.3 + D_error[0] * 0.1)
+                            # now_angle = Kp * now_err + Kd * (now_err - last_err)
+                            if -now_angle > 30:
+                                now_angle = -30
+                        else:
+                            out_check += 1
+                    
+                        angle = -now_angle
+                        if cv2.waitKey(25) == ord('q'):
+                            break
+                        # ark_contrl.speed = 0
+                        # ark_contrl.steering_angle = angle
+                        print(f"angle:{angle}")
+                        # cmd_vel_pub.publish(ark_contrl)
+
+    finally:
+        print('End')
+        Video.release() 
+

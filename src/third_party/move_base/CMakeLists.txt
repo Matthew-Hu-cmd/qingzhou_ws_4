@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(move_base)
 
 find_package(catkin REQUIRED
@@ -32,6 +32,11 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
+
+    INCLUDE_DIRS
+        include
+        ${EIGEN3_INCLUDE_DIRS}
+    LIBRARIES move_base
     CATKIN_DEPENDS
         dynamic_reconfigure
         geometry_msgs
@@ -62,12 +67,6 @@ add_executable(move_base_node
 add_dependencies(move_base_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(move_base_node move_base)
 set_target_properties(move_base_node PROPERTIES OUTPUT_NAME move_base)
-
-
-add_executable(simple_navigation_goals src/simple_navigation_goals.cpp)
-target_link_libraries(simple_navigation_goals ${catkin_LIBRARIES})
-
-
 
 install(
     TARGETS

@@ -45,12 +45,15 @@ DynamicParameters::DynamicParameters()
 	client = new dynamic_reconfigure::Client<qingzhou_nav::L1_dynamicConfig> ("/L1_controller_v3", dynCallBack);
 
 	//先设置初始参数，使其他函数可用
-	setParameters(paramConfig.config1);
 	ros::service::waitForService("/move_base/clear_costmaps");
+	ros::service::waitForService("/L1_controller_v3/set_parameters");
+	ros::service::waitForService("/move_base/global_costmap/inflation/set_parameters");
 
-	map_client = nh.serviceClient<std_msgs::Empty>("/move_base/clear_costmaps");
-	
+	map_client = nh.serviceClient<std_srvs::Empty>("/move_base/clear_costmaps");
 	locate_sub = nh.subscribe("/qingzhou_locate", 1, &DynamicParameters::locateCB, this);
+
+	setParameters(paramConfig.config1);
+	initCostmapConf();
 }
 
 /******************************************
@@ -108,21 +111,67 @@ void DynamicParameters::locateCB(const std_msgs::Int32& data)
 	{
 		case Start:
 			setParameters(paramConfig.config1);
+			setCostmapConf(costmapConfOther);
 			map_client.call(empty);
 			break;
 		case Load:
 			setParameters(paramConfig.config2);
-			map_client.call(empty);
+			setCostmapConf(costmapConfLoad);
 			break;
-		case Unload:
+		case TrafficLightToUnload:
 			setParameters(paramConfig.config3);
-			map_client.call(empty);
 			break;
-		case RoadLine:
+		case UnloadToRoadLine:
 			setParameters(paramConfig.config4);
+			setCostmapConf(costmapConfOther);
+			break;
+		case RoadLineToStart:
+			setParameters(paramConfig.config5);
 			break;
 		default:
 			ROS_INFO("Keep!");
 			break;
+	}
+}
+
+void DynamicParameters::initCostmapConf()
+{
+
+	dynamic_reconfigure::DoubleParameter doubleParam;
+
+	doubleParam.name = "inflation_radius";
+	doubleParam.value = 1.0;
+	costmapConfLoad.doubles.push_back(doubleParam);
+
+	doubleParam.value = 0.5;
+	costmapConfOther.doubles.push_back(doubleParam);
+	ROS_INFO("Initialize Costmap Config");
+
+	doubleParam.name = "cost_scaling_factor";
+	doubleParam.value = 5.0;
+	costmapConfOther.doubles.push_back(doubleParam);
+
+	doubleParam.value = 30.0;
+	costmapConfLoad.doubles.push_back(doubleParam);
+
+	srv_req.config = costmapConfOther;
+
+	if (ros::service::call("/move_base/global_costmap/inflation/set_parameters", srv_req, srv_resp)) 
+	{
+    	ROS_INFO("Set Costmap Config");
+	}
+}
+
+void DynamicParameters::setCostmapConf(dynamic_reconfigure::Config& conf)
+{
+	srv_req.config = conf;
+
+	if (ros::service::call("/move_base/global_costmap/inflation/set_parameters", srv_req, srv_resp)) 
+	{
+    	ROS_INFO("Set Costmap Config");
+	}
+	else
+	{
+		ROS_ERROR("Call to set costmap parameters failed");
 	}
 }

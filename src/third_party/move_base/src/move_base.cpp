@@ -36,6 +36,7 @@
 *         Mike Phillips (put the planner in its own thread)
 *********************************************************************/
 #include <move_base/move_base.h>
+#include <move_base_msgs/RecoveryStatus.h>
 #include <cmath>
 
 #include <boost/algorithm/string.hpp>
@@ -44,6 +45,7 @@
 #include <geometry_msgs/Twist.h>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <time.h>
 
 namespace move_base {
 
@@ -52,7 +54,7 @@ namespace move_base {
     as_(NULL),
     planner_costmap_ros_(NULL), controller_costmap_ros_(NULL),
     bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner"),
-    blp_loader_("nav_core", "nav_core::BaseLocalPlanner"), 
+    blp_loader_("nav_core", "nav_core::BaseLocalPlanner"),
     recovery_loader_("nav_core", "nav_core::RecoveryBehavior"),
     planner_plan_(NULL), latest_plan_(NULL), controller_plan_(NULL),
     runPlanner_(false), setup_(false), p_freq_change_(false), c_freq_change_(false), new_global_plan_(false) {
@@ -61,7 +63,8 @@ namespace move_base {
 
     ros::NodeHandle private_nh("~");
     ros::NodeHandle nh;
-
+    open_debug = false;
+    ROS_INFO_COND_NAMED(open_debug, "move base debug", "move_base: *******ITS MY MOVEBASE***********");
     recovery_trigger_ = PLANNING_R;
 
     //get some parameters that will be global to the move base node
@@ -87,6 +90,7 @@ namespace move_base {
     planner_plan_ = new std::vector<geometry_msgs::PoseStamped>();
     latest_plan_ = new std::vector<geometry_msgs::PoseStamped>();
     controller_plan_ = new std::vector<geometry_msgs::PoseStamped>();
+    lastvalid_plan_ = new std::vector<geometry_msgs::PoseStamped>();
 
     //set up the planner's thread
     planner_thread_ = new boost::thread(boost::bind(&MoveBase::planThread, this));
@@ -97,6 +101,7 @@ namespace move_base {
 
     ros::NodeHandle action_nh("move_base");
     action_goal_pub_ = action_nh.advertise<move_base_msgs::MoveBaseActionGoal>("goal", 1);
+    recovery_status_pub_= action_nh.advertise<move_base_msgs::RecoveryStatus>("recovery_status", 1);
 
     //we'll provide a mechanism for some people to send goals as PoseStamped messages over a topic
     //they won't get any useful information back about its status, but this is useful for tools
@@ -380,9 +385,9 @@ namespace move_base {
     //first try to make a plan to the exact desired goal
     std::vector<geometry_msgs::PoseStamped> global_plan;
     if(!planner_->makePlan(start, req.goal, global_plan) || global_plan.empty()){
-      ROS_DEBUG_NAMED("move_base","Failed to find a plan to exact goal of (%.2f, %.2f), searching for a feasible goal within tolerance", 
+      ROS_DEBUG_NAMED("move_base","Failed to find a plan to exact goal of (%.2f, %.2f), searching for a feasible goal within tolerance",
           req.goal.pose.position.x, req.goal.pose.position.y);
-
+      ROS_INFO_COND_NAMED(open_debug, "move base debug", "move_base: First make plan in plan service");
       //search outwards for a feasible goal within the specified tolerance
       geometry_msgs::PoseStamped p;
       p = req.goal;
@@ -417,7 +422,7 @@ namespace move_base {
                       //(the reachable goal should have been added by the global planner)
                       global_plan.push_back(req.goal);
                     }
-
+                    ROS_INFO_COND_NAMED(open_debug, "move base debug", "move_base: Second make plan in plan service");
                     found_legal = true;
                     ROS_DEBUG_NAMED("move_base", "Found a plan to point (%.2f, %.2f)", p.pose.position.x, p.pose.position.y);
                     break;
@@ -588,18 +593,51 @@ namespace move_base {
       //run planner
       planner_plan_->clear();
       bool gotPlan = n.ok() && makePlan(temp_goal, *planner_plan_);
+      /*
+      情况1 ： 
+      */
+      if(gotPlan||(has_valid_plan_&&lastvalid_plan_->size() >0)){
+        // if(!gotPlan)
+        // {
+        //   copy(lastvalid_plan_->begin(),lastvalid_plan_->end(),planner_plan_->begin());
+        // }
+        // ROS_INFO_STREAM_COND(open_debug, "lastvalid_plan_ size:" << lastvalid_plan_->size());
 
-      if(gotPlan){
-        ROS_DEBUG_NAMED("move_base_plan_thread","Got Plan with %zu points!", planner_plan_->size());
+        // ROS_DEBUG_NAMED("move_base_plan_thread", "Got Plan with %zu points!", planner_plan_->size());
         //pointer swap the plans under mutex (the controller will pull from latest_plan_)
         std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
 
         lock.lock();
-        planner_plan_ = latest_plan_;
-        latest_plan_ = temp_plan;
-        last_valid_plan_ = ros::Time::now();
-        planning_retries_ = 0;
-        new_global_plan_ = true;
+        if(gotPlan)
+        {
+          planner_plan_ = latest_plan_;
+          latest_plan_ = temp_plan;
+          lastvalid_plan_->resize(latest_plan_->size());
+          copy(latest_plan_->begin(), latest_plan_->end(), lastvalid_plan_->begin());
+          // lastvalid_plan_ = latest_plan_;
+          has_valid_plan_ = true;
+          last_valid_plan_ = ros::Time::now();
+          planning_retries_ = 0;
+          new_global_plan_ = true;
+          // ROS_INFO_STREAM_COND(open_debug, "got plan ;lastvalide plan size:" << lastvalid_plan_->size());
+          // ROS_INFO_COND_NAMED("open_debug", "my move base", "Got plan lastvalid plan = latest plan");
+        }
+        else
+        {
+
+            latest_plan_->resize(lastvalid_plan_->size());
+            copy(lastvalid_plan_->begin(), lastvalid_plan_->end(), latest_plan_->begin());
+            // ROS_INFO_STREAM_COND(open_debug, "latest_plan_ size is not 0 keep lastvalid_plan_ update" );
+            // ROS_INFO_STREAM_COND(open_debug, "can not got plan, copy lastvalid_plan_ to latest_plan_ ;lastvalide plan size:" << lastvalid_plan_->size()<<" latest_plan_ size is:"<<latest_plan_->size());
+            last_valid_plan_ = ros::Time::now();
+            planning_retries_ = 0; 
+            // planning_retries_++;
+
+            new_global_plan_ = true;
+          
+
+          // ROS_INFO_COND_NAMED("open_debug", "my move base", "Cant get plan latest_plan_ = lastvalid_plan_");
+        }
 
         ROS_DEBUG_NAMED("move_base_plan_thread","Generated a plan from the base_global_planner");
 
@@ -643,6 +681,7 @@ namespace move_base {
           timer = n.createTimer(sleep_time, &MoveBase::wakePlanner, this);
         }
       }
+      //  ROS_INFO_STREAM_COND(open_debug, "while end :lastvalid_plan_ size:" << lastvalid_plan_->size());
     }
   }
 
@@ -654,7 +693,7 @@ namespace move_base {
     }
 
     geometry_msgs::PoseStamped goal = goalToGlobalFrame(move_base_goal->target_pose);
-  
+
     publishZeroVelocity();
     //we have a goal so start the planner
     boost::unique_lock<boost::recursive_mutex> lock(planner_mutex_);
@@ -664,7 +703,6 @@ namespace move_base {
     lock.unlock();
 
     current_goal_pub_.publish(goal);
-    std::vector<geometry_msgs::PoseStamped> global_plan;
 
     ros::Rate r(controller_frequency_);
     if(shutdown_costmaps_){
@@ -765,7 +803,11 @@ namespace move_base {
       ros::WallTime start = ros::WallTime::now();
 
       //the real work on pursuing a goal is done here
-      bool done = executeCycle(goal, global_plan);
+      auto startTime = clock();
+      bool done = executeCycle(goal);
+      
+      auto endTime = clock();
+      ROS_WARN_STREAM("executeCycle:" << endTime - startTime);
 
       //if we're done, then we'll return from execute
       if(done)
@@ -798,7 +840,7 @@ namespace move_base {
     return hypot(p1.pose.position.x - p2.pose.position.x, p1.pose.position.y - p2.pose.position.y);
   }
 
-  bool MoveBase::executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan){
+  bool MoveBase::executeCycle(geometry_msgs::PoseStamped& goal){
     boost::recursive_mutex::scoped_lock ecl(configuration_mutex_);
     //we need to be able to publish velocity commands
     geometry_msgs::Twist cmd_vel;
@@ -819,7 +861,7 @@ namespace move_base {
       last_oscillation_reset_ = ros::Time::now();
       oscillation_pose_ = current_position;
 
-      //if our last recovery was caused by oscillation, we want to reset the recovery index 
+      //if our last recovery was caused by oscillation, we want to reset the recovery index
       if(recovery_trigger_ == OSCILLATION_R)
         recovery_index_ = 0;
     }
@@ -842,8 +884,10 @@ namespace move_base {
       std::vector<geometry_msgs::PoseStamped>* temp_plan = controller_plan_;
 
       boost::unique_lock<boost::recursive_mutex> lock(planner_mutex_);
+      ROS_INFO_STREAM_COND(open_debug, "IN CONTROLLER: latest_plan_ size is:" << latest_plan_->size() << "  lastvalid_plan_ size is:" << lastvalid_plan_->size());
       controller_plan_ = latest_plan_;
       latest_plan_ = temp_plan;
+      
       lock.unlock();
       ROS_DEBUG_NAMED("move_base","pointers swapped!");
 
@@ -904,10 +948,10 @@ namespace move_base {
           state_ = CLEARING;
           recovery_trigger_ = OSCILLATION_R;
         }
-        
+
         {
          boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(controller_costmap_ros_->getCostmap()->getMutex()));
-        
+
         if(tc_->computeVelocityCommands(cmd_vel)){
           ROS_DEBUG_NAMED( "move_base", "Got a valid command from the local planner: %.3lf, %.3lf, %.3lf",
                            cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z );
@@ -951,7 +995,16 @@ namespace move_base {
         ROS_DEBUG_NAMED("move_base","In clearing/recovery state");
         //we'll invoke whatever recovery behavior we're currently on if they're enabled
         if(recovery_behavior_enabled_ && recovery_index_ < recovery_behaviors_.size()){
-          ROS_DEBUG_NAMED("move_base_recovery","Executing behavior %u of %zu", recovery_index_, recovery_behaviors_.size());
+          ROS_DEBUG_NAMED("move_base_recovery","Executing behavior %u of %zu", recovery_index_+1, recovery_behaviors_.size());
+
+          move_base_msgs::RecoveryStatus msg;
+          msg.pose_stamped = current_position;
+          msg.current_recovery_number = recovery_index_;
+          msg.total_number_of_recoveries = recovery_behaviors_.size();
+          msg.recovery_behavior_name =  recovery_behavior_names_[recovery_index_];
+
+          recovery_status_pub_.publish(msg);
+
           recovery_behaviors_[recovery_index_]->runBehavior();
 
           //we at least want to give the robot some time to stop oscillating after executing the behavior
@@ -1020,7 +1073,7 @@ namespace move_base {
                     std::string name_i = behavior_list[i]["name"];
                     std::string name_j = behavior_list[j]["name"];
                     if(name_i == name_j){
-                      ROS_ERROR("A recovery behavior with the name %s already exists, this is not allowed. Using the default recovery behaviors instead.", 
+                      ROS_ERROR("A recovery behavior with the name %s already exists, this is not allowed. Using the default recovery behaviors instead.",
                           name_i.c_str());
                       return false;
                     }
@@ -1067,6 +1120,7 @@ namespace move_base {
 
             //initialize the recovery behavior with its name
             behavior->initialize(behavior_list[i]["name"], &tf_, planner_costmap_ros_, controller_costmap_ros_);
+            recovery_behavior_names_.push_back(behavior_list[i]["name"]);
             recovery_behaviors_.push_back(behavior);
           }
           catch(pluginlib::PluginlibException& ex){
@@ -1076,7 +1130,7 @@ namespace move_base {
         }
       }
       else{
-        ROS_ERROR("The recovery behavior specification must be a list, but is of XmlRpcType %d. We'll use the default recovery behaviors instead.", 
+        ROS_ERROR("The recovery behavior specification must be a list, but is of XmlRpcType %d. We'll use the default recovery behaviors instead.",
             behavior_list.getType());
         return false;
       }
@@ -1102,23 +1156,28 @@ namespace move_base {
       //first, we'll load a recovery behavior to clear the costmap
       boost::shared_ptr<nav_core::RecoveryBehavior> cons_clear(recovery_loader_.createInstance("clear_costmap_recovery/ClearCostmapRecovery"));
       cons_clear->initialize("conservative_reset", &tf_, planner_costmap_ros_, controller_costmap_ros_);
+      recovery_behavior_names_.push_back("conservative_reset");
       recovery_behaviors_.push_back(cons_clear);
 
       //next, we'll load a recovery behavior to rotate in place
       boost::shared_ptr<nav_core::RecoveryBehavior> rotate(recovery_loader_.createInstance("rotate_recovery/RotateRecovery"));
       if(clearing_rotation_allowed_){
         rotate->initialize("rotate_recovery", &tf_, planner_costmap_ros_, controller_costmap_ros_);
+        recovery_behavior_names_.push_back("rotate_recovery");
         recovery_behaviors_.push_back(rotate);
       }
 
       //next, we'll load a recovery behavior that will do an aggressive reset of the costmap
       boost::shared_ptr<nav_core::RecoveryBehavior> ags_clear(recovery_loader_.createInstance("clear_costmap_recovery/ClearCostmapRecovery"));
       ags_clear->initialize("aggressive_reset", &tf_, planner_costmap_ros_, controller_costmap_ros_);
+      recovery_behavior_names_.push_back("aggressive_reset");
       recovery_behaviors_.push_back(ags_clear);
 
       //we'll rotate in-place one more time
-      if(clearing_rotation_allowed_)
+      if(clearing_rotation_allowed_){
         recovery_behaviors_.push_back(rotate);
+        recovery_behavior_names_.push_back("rotate_recovery");
+      }
     }
     catch(pluginlib::PluginlibException& ex){
       ROS_FATAL("Failed to load a plugin. This should not happen on default recovery behaviors. Error: %s", ex.what());
